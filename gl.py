@@ -79,8 +79,8 @@ class Render(object):
         self.draw_color = color(r, g, b)
 
     def drawPoint(self, x, y):
-        relative_x = int(self.vw_x + ((self.vw_width / 2) * (x + 1)))
-        relative_y = int(self.vw_y + ((self.vw_height / 2) * (y + 1)))
+        relative_x = self.vw_x + ((self.vw_width / 2) * (x + 1))
+        relative_y = self.vw_y + ((self.vw_height / 2) * (y + 1))
         self.pixels[relative_x][relative_y] = self.draw_color
 
     '''
