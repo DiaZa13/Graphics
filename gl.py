@@ -47,6 +47,7 @@ class Render(object):
         # Create a new window
         self.createWindow()
 
+
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
@@ -56,6 +57,7 @@ class Render(object):
     def clear(self):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
+
 
     # Creación de la ventana
     def createWindow(self):
@@ -71,6 +73,7 @@ class Render(object):
             for b in range(y, (self.vw_height + y + 1)):
                 self.pixels[a][b] = self.draw_color
 
+
     # --------- DRAW
     def drawColor(self, r, g, b):
         self.draw_color = color(r, g, b)
@@ -78,7 +81,6 @@ class Render(object):
     def drawPoint(self, x, y):
         relative_x = int(self.vw_x + ((self.vw_width / 2) * (x + 1)))
         relative_y = int(self.vw_y + ((self.vw_height / 2) * (y + 1)))
-        self.draw_color = testing
         self.pixels[relative_x][relative_y] = self.draw_color
 
     '''
