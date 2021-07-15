@@ -1,17 +1,18 @@
 # Interpreta bytes y los empaca como datos binarios
 import struct
+from collections import namedtuple
 
+# Creación de un tipo de variable para dibujar una línea
+V2 = namedtuple('Point2', ['x', 'y'])
 
 # Permite asegurar que únicamente se utilize un byte
 def char(c):
     # 1 byte, ya que el char de Python ocupa 4 bytes
     return struct.pack('=c', c.encode('ascii'))
 
-
 def word(w):
     # 2 bytes
     return struct.pack('=h', w)
-
 
 def dword(d):
     # 4 bytes
@@ -27,7 +28,6 @@ def color(r, g, b):
 # COLORS
 BLACK = color(0, 0, 0)
 WHITE = color(1, 1, 1)
-testing = color(0.2, 1, 1)
 
 
 # Creación de clase para hacer renderizar
@@ -47,7 +47,6 @@ class Render(object):
         # Create a new window
         self.createWindow()
 
-
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
@@ -58,30 +57,83 @@ class Render(object):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
 
-
     # Creación de la ventana
     def createWindow(self):
         self.clear()
+        # Default viewport
+        self.viewport(self.width, self.height, 0, 0)
 
     # Viewport
-    def createViewport(self, width, height, x, y):
-        self.vw_width = width
-        self.vw_height = height
+    def viewport(self, width, height, x, y, color = None):
+        self.vw_width = width - 1
+        self.vw_height = height - 1
         self.vw_x = x
         self.vw_y = y
+
         for a in range(x, (self.vw_width + x + 1)):
             for b in range(y, (self.vw_height + y + 1)):
-                self.pixels[a][b] = self.draw_color
-
+                self.pixels[a][b] = color or self.clear_color
 
     # --------- DRAW
     def drawColor(self, r, g, b):
         self.draw_color = color(r, g, b)
 
-    def drawPoint(self, x, y):
-        relative_x = int(self.vw_x + ((self.vw_width / 2) * (x + 1)))
-        relative_y = int(self.vw_y + ((self.vw_height / 2) * (y + 1)))
-        self.pixels[relative_x][relative_y] = self.draw_color
+    # Dibujar un punto con coordenadas normalizadas
+    def drawPoint_NDC(self, x, y, color = None):
+        relative_x = self.vw_x + ((self.vw_width / 2) * (x + 1))
+        relative_y = self.vw_y + ((self.vw_height / 2) * (y + 1))
+        self.pixels[int(relative_x)][int(relative_y)] = color or self.draw_color
+
+    def drawPoint(self, x, y, color = None):
+        if x < self.vw_x or x > self.vw_x + self.vw_width or y < self.vw_y or y > self.vw_y + self.vw_height:
+            return
+
+        if (0 < x < self.width) and (0 < y < self.height):
+            self.pixels[x][y] = color or self.draw_color
+
+    # Bresenham's line algorithm
+    # @arg: v0 → vértice inicial, v1 → vértice final
+    def drawLine(self, v0, v1, color = None):
+        x0 = v0.x
+        x1 = v1.x
+        y0 = v0.y
+        y1 = v1.y
+
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+
+        # Determinar si la línea está muy inclinada
+        steep = dy > dx
+        # Si la línea es demasiado inclinada, se cambian los valores
+        # Normalmente y = mx + b, sin embargo, al tener una pendiente mayor
+        # a 1, se pierden pixeles al momento de dibujar, por lo que se calcula
+        # x = my + b
+        if steep:
+            # Intercambio de valores
+            x0, y0 = y0, x0
+            x1, y1 = y1, x1
+
+        if x0 > x1:
+            x0, x1 = x1, x0
+            y0, y1 = y1, y0
+
+        # Define en qué punto se va dibujando en y
+        offset = 0
+        # Esto define cuál es el límite para cambiar de pixel
+        limit = 0.5
+        # Cálculo de la pendiente
+        m = abs(y1 - y0)/abs(x1 - x0)
+        y = y0
+        for x in range(x0, x1 + 1):
+            if steep:
+                self.drawPoint(y, x, color)
+            else:
+                self.drawPoint(x, y, color)
+            # Cada cambio en x aumenta la pendiente a offset
+            offset += m
+            if offset >= limit:
+                y += 1  if y0 < y1 else -1 # Indica el cambio de pixel (decisión)
+                limit += 1
 
     '''
     Creación de bitmap
