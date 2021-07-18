@@ -65,13 +65,13 @@ class Render(object):
 
     # Viewport
     def viewport(self, width, height, x, y, color = None):
-        self.vw_width = width - 1
-        self.vw_height = height - 1
-        self.vw_x = x
-        self.vw_y = y
+        self.vw_width = int(width - 1)
+        self.vw_height = int(height - 1)
+        self.vw_x = int(x)
+        self.vw_y = int(y)
 
-        for a in range(x, (self.vw_width + x + 1)):
-            for b in range(y, (self.vw_height + y + 1)):
+        for a in range(int(x), (self.vw_width + int(x) + 1)):
+            for b in range(int(y), (self.vw_height + int(y) + 1)):
                 self.pixels[a][b] = color or self.clear_color
 
     # --------- DRAW
@@ -88,8 +88,8 @@ class Render(object):
         if x < self.vw_x or x > self.vw_x + self.vw_width or y < self.vw_y or y > self.vw_y + self.vw_height:
             return
 
-        if (0 < x < self.width) and (0 < y < self.height):
-            self.pixels[x][y] = color or self.draw_color
+        if (0 <= x < self.width) and (0 <= y < self.height):
+            self.pixels[int(x)][int(y)] = color or self.draw_color
 
     # Bresenham's line algorithm
     # @arg: v0 → vértice inicial, v1 → vértice final
@@ -124,7 +124,7 @@ class Render(object):
         # Cálculo de la pendiente
         m = abs(y1 - y0)/abs(x1 - x0)
         y = y0
-        for x in range(x0, x1 + 1):
+        for x in range(int(x0), int(x1 + 1)):
             if steep:
                 self.drawPoint(y, x, color)
             else:
