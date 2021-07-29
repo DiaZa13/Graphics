@@ -80,7 +80,7 @@ class Render(object):
 
     # --------- DRAW
     def drawColor(self, r, g, b):
-        self.draw_color = color(r, g, b)
+        self.draw_color = color(r/255, g/255, b/255)
 
     # Dibujar un punto con coordenadas normalizadas
     def drawPoint_NDC(self, x, y, color=None):
