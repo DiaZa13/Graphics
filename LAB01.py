@@ -24,74 +24,26 @@ def drawPolygon(polygon):
                         gl.V2(polygon[(v + 1) % limit][0], polygon[(v + 1) % limit][1]))
 
 
-render.drawColor(255, 174, 3)
+render.drawColor(243, 202, 64)
 drawPolygon(pol1)
-render.drawColor(230, 127, 13)
+render.drawColor(242, 165, 65)
 drawPolygon(pol2)
-render.drawColor(254, 78, 0)
+render.drawColor(240, 138, 75)
 drawPolygon(pol3)
-render.drawColor(233, 25, 15)
+render.drawColor(87, 117, 144)
 drawPolygon(pol4)
 render.drawColor(0, 0, 0)
 drawPolygon(pol5)
 
-render.drawColor(1, 1, 1)
-
-
-def filling(polygon, clase=None):
-    limit = len(polygon)
-    x_coordinates = []
-    y_coordinates = []
-    slopes = []
-    drawX = []
-    for v in polygon:
-        x_coordinates.append(v[0])
-        y_coordinates.append(v[1])
-
-    y_max = max(y_coordinates)
-    y_min = min(y_coordinates)
-
-    for v in range(limit):
-        x0 = polygon[v][0]
-        y0 = polygon[v][1]
-        x1 = polygon[(v + 1) % limit][0]
-        y1 = polygon[(v + 1) % limit][1]
-
-        m = (y1 - y0) / (x1 - x0)
-
-        slopes.append(m)
-
-    for y in range(y_min, y_max):
-
-        for v in range(limit):
-            a = polygon[v][1]
-            b = polygon[(v + 1) % limit][1]
-            x = polygon[v][0]
-            if (a <= y < b) or (b <= y < a):
-                x = round(((y - a) / slopes[v]) + x)
-                drawX.append(x)
-
-        render.drawLine(gl.V2(drawX[(len(drawX) - 2)], y), gl.V2(drawX[len(drawX) - 1], y))
-        if clase == 'e':
-            if y_min <= y < 345:
-                render.drawLine(gl.V2(drawX[(len(drawX) - 4)], y), gl.V2(drawX[len(drawX) - 3], y))
-                render.drawLine(gl.V2(drawX[(len(drawX) - 2)], y), gl.V2(drawX[len(drawX) - 1], y))
-        elif clase == 't':
-            if 144 <= y < 177:
-                render.drawLine(gl.V2(drawX[(len(drawX) - 4)], y), gl.V2(drawX[len(drawX) - 3], y))
-                render.drawLine(gl.V2(drawX[(len(drawX) - 2)], y), gl.V2(drawX[len(drawX) - 1], y), gl.color(0, 0, 0))
-            elif 177 <= y < 180:
-                render.drawLine(gl.V2(drawX[(len(drawX) - 4)], y), gl.V2(drawX[len(drawX) - 3], y))
-
-render.drawColor(255, 174, 3)
-filling(pol1, 'e')
-render.drawColor(230, 127, 13)
-filling(pol2)
-render.drawColor(254, 78, 0)
-filling(pol3)
-render.drawColor(233, 25, 15)
-filling(pol4, 't')
+render.drawColor(243, 202, 64)
+render.filling(pol1, 'e')
+render.drawColor(242, 165, 65)
+render.filling(pol2)
+render.drawColor(240, 138, 75)
+render.filling(pol3)
+render.drawColor(87, 117, 144)
+render.filling(pol4, 't')
 render.drawColor(0, 0, 0)
-filling(pol5)
+render.filling(pol5)
 
 render.end('filling.bmp')

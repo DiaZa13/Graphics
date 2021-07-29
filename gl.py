@@ -164,6 +164,51 @@ class Render(object):
 
                 self.drawLine(V2(x0, y0), V2(x1, y1))
 
+    # Rellenado de polígonos
+    def filling(self, polygon, clase=None):
+        limit = len(polygon)
+        x_coordinates = []
+        y_coordinates = []
+        slopes = []
+        drawX = []
+        for v in polygon:
+            x_coordinates.append(v[0])
+            y_coordinates.append(v[1])
+
+        y_max = max(y_coordinates)
+        y_min = min(y_coordinates)
+
+        for v in range(limit):
+            x0 = polygon[v][0]
+            y0 = polygon[v][1]
+            x1 = polygon[(v + 1) % limit][0]
+            y1 = polygon[(v + 1) % limit][1]
+
+            m = (y1 - y0) / (x1 - x0)
+
+            slopes.append(m)
+
+        for y in range(y_min, y_max):
+
+            for v in range(limit):
+                a = polygon[v][1]
+                b = polygon[(v + 1) % limit][1]
+                x = polygon[v][0]
+                if (a <= y < b) or (b <= y < a):
+                    x = round(((y - a) / slopes[v]) + x)
+                    drawX.append(x)
+
+            self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y))
+            if clase == 'e':
+                if y_min <= y < 345:
+                    self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
+                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y))
+            elif clase == 't':
+                if 144 <= y < 177:
+                    self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
+                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y), color(0, 0, 0))
+                elif 177 <= y < 180:
+                    self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
 
     '''
     Creación de bitmap
