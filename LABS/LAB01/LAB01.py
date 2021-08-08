@@ -1,4 +1,4 @@
-import gl
+from libs import gl
 
 # Variables
 width = 960
