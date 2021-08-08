@@ -1,7 +1,7 @@
 # Graphic library
 from collections import namedtuple
-from utils import char, word, dword, color, baryCoords
-import obj
+from libs.zutils import char, word, dword, color, baryCoords
+from libs import obj
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -124,6 +124,69 @@ class Render(object):
                 y += 1 if y0 < y1 else -1  # Indica el cambio de pixel (decisión)
                 limit += 1
 
+    # ------- TRIANGLES
+    # Dibujado de triángulos
+    def flatBottomTriangle(self, v1, v2, v3, color=None):
+        # Pendientes
+        m21 = (v2.x - v1.x) / (v2.y - v1.y)
+        m31 = (v3.x - v1.x) / (v3.y - v1.y)
+        x1 = v2.x
+        x2 = v3.x
+
+        for y in range(v2.y, v1.y + 1):
+            self.drawLine(V2(int(x1), y), V2(int(x2), y), color)
+            x1 += m21
+            x2 += m31
+
+    def flatTopTriangle(self, v1, v2, v3):
+        pass
+
+
+    def drawTriangle(self, A, B, C, color=None):
+        self.drawLine(A, B, color)
+        self.drawLine(B, C, color)
+        self.drawLine(A, C, color)
+
+        # Ordenar descendentemente los vértices del triángulo → arriba hacia abajo
+        if A.y < B.y:
+            A, B = B, A
+        if A.y < C.y:
+            A, C = C, A
+        if B.y < C.y:
+            B, C = C, B
+
+        if B.y == C.y:  # Triángulo normal → base inferior plana
+            self.flatBottomTriangle(A, B, C)
+        elif A.y == B.y:  # Triángulo invertido → base superior plana
+            self.flatTopTriangle(A, B, C)
+        else:  # Triángulo irregular
+            # 1. Dividir el triángulo en 2
+            # 2. Dibujar ambos casos TN y TI
+            # Teorema de intercepto para sacar el reflejo de B
+
+            pass
+
+
+    def drawTriangle_bc(self, A, B, C, color = None):
+        # Bounding Box → límites
+        y_max = round(max(A.y, B.y, C.y))
+        y_min = round(min(A.y, B.y, C.y))
+        x_max = round(max(A.x, B.x, C.x))
+        x_min = round(min(A.x, B.x, C.x))
+
+        for x in range(x_min, x_max + 1):
+            for y in range(y_min, y_max + 1):
+                u, v, w = baryCoords(A, B, C, V2(x, y))
+
+                if u >= 0 and v >= 0 and w >= 0:
+                    # Conocer el valor de z
+                    z = A.z * u + B.z * v + C.z * w
+                    if z > self.zbuffer[x][y]:
+                        self.drawPoint(x, y)
+                        # Modifico el valor del zbuffer
+                        self.zbufer[x][y] = z
+
+    # ----------- OBJ
     def loadModel(self, filename, scale=V2(1, 1), translate=V2(0.0, 0.0)):
 
         model = obj.obj(filename)
@@ -196,36 +259,10 @@ class Render(object):
                 elif 177 <= y < 180:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
 
-    # Dibujar triángulos
-    # ABC = (By - Cy)(Ax - Cx) + (Cx - Bx)(Ay * Cy) - área de un triángulo con vértices
-    # = || AB x AC ||
-
-    def drawTriangle_bc(self, A, B, C, color = None):
-        # Bounding Box → límites
-        y_max = round(max(A.y, B.y, C.y))
-        y_min = round(min(A.y, B.y, C.y))
-        x_max = round(max(A.x, B.x, C.x))
-        x_min = round(min(A.x, B.x, C.x))
-
-        for x in range(x_min, x_max + 1):
-            for y in range(y_min, y_max + 1):
-                u, v, w = baryCoords(A, B, C, V2(x, y))
-
-                if u >= 0 and v >= 0 and w >= 0:
-                    # Conocer el valor de z
-                    z = A.z * u + B.z * v + C.z * w
-                    if z > self.zbuffer[x][y]:
-                        self.drawPoint(x, y)
-                        # Modifico el valor del zbuffer
-                        self.zbufer[x][y] = z
-
-
-
     '''
     Creación de bitmap
     @:arg filename: nombre del documento .bmp
     '''
-
     def end(self, filename):
         with open(filename, 'wb') as file:
             # Header
@@ -254,6 +291,3 @@ class Render(object):
             for y in range(self.height):
                 for x in range(self.width):
                     file.write(self.pixels[x][y])
-
-    # Cargar texturas
-

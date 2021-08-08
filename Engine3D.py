@@ -1,11 +1,11 @@
 # Main
-from libs import gl
+from libs.gl import Render, V2
 
 # Variables
 width = 960
 height = 700
 
-render = gl.Render(width, height)
-render.loadModel('Pallone/Ball OBJ.obj', gl.V2(320, 320), gl.V2(width / 3, height / 2))
+render = Render(width, height)
+render.drawTriangle(V2(10, 10), V2(190, 10), V2(100, 190))
 
 render.end('output.bmp')
