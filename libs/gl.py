@@ -2,6 +2,7 @@
 from collections import namedtuple
 from libs.zutils import char, word, dword, color, baryCoords
 from libs import obj
+import random
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -150,10 +151,6 @@ class Render(object):
             x2 += m32
 
     def drawTriangle(self, A, B, C, color=None):
-        self.drawLine(A, B, color)
-        self.drawLine(B, C, color)
-        self.drawLine(A, C, color)
-
         # Ordenar descendentemente los vértices del triángulo → arriba hacia abajo
         if A.y < B.y:
             A, B = B, A
@@ -176,8 +173,7 @@ class Render(object):
             self.flatTopTriangle(D, B, C, color)
             pass
 
-
-    def drawTriangle_bc(self, A, B, C, color = None):
+    def drawTriangle_bc(self, A, B, C, color=None):
         # Bounding Box → límites
         y_max = round(max(A.y, B.y, C.y))
         y_min = round(min(A.y, B.y, C.y))
@@ -204,19 +200,22 @@ class Render(object):
         # draw Model
         for face in model.faces:
             vertex_count = len(face)  # Guarda la cantidad de vertices en la cara
-            for x in range(vertex_count):
-                # Se resta 0 porque OBJ empieza en 1 pero list empieza en 0
-                index0 = face[x][0] - 1  # Obtiene el vértice de cada x
-                index1 = face[(x + 1) % vertex_count][0] - 1  # Obtiene el índice del segundo vértice
-                vertex0 = model.vertices[index0]  # Obtiene el vértice a dibujar con respecto a la cara
-                vertex1 = model.vertices[index1]  # Obtiene el vértice a dibujar con respecto a la cara
 
-                x0 = vertex0[0] * scale.x + translate.x
-                y0 = vertex0[1] * scale.x + translate.x
-                x1 = vertex1[0] * scale.x + translate.x
-                y1 = vertex1[1] * scale.x + translate.x
+            if vertex_count == 3:
+                index0 = face[0][0] - 1  # Obtiene el vértice de cada x
+                index1 = face[1][0] - 1  # Obtiene el vértice de cada x
+                index2 = face[2][0] - 1  # Obtiene el vértice de cada x
 
-                self.drawLine(V2(x0, y0), V2(x1, y1))
+                vert0 = model.vertices[index0]
+                vert1 = model.vertices[index1]
+                vert2 = model.vertices[index2]
+
+                a = V2(int(vert0[0] * scale.x + translate.x), int(vert0[1] * scale.y + translate.y))
+                b = V2(int(vert1[0] * scale.x + translate.x), int(vert1[1] * scale.y + translate.y))
+                c = V2(int(vert2[0] * scale.x + translate.x), int(vert2[1] * scale.y + translate.y))
+
+                self.drawTriangle(a, b, c, color(random.random(), random.random(),random.random()))
+
 
     def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1,1,1)):
         return V3(vertex[0] * scale.x + translate.x)
