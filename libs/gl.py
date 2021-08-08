@@ -149,7 +149,6 @@ class Render(object):
             x1 += m31
             x2 += m32
 
-
     def drawTriangle(self, A, B, C, color=None):
         self.drawLine(A, B, color)
         self.drawLine(B, C, color)
@@ -171,7 +170,10 @@ class Render(object):
             # 1. Dividir el triángulo en 2
             # 2. Dibujar ambos casos TN y TI
             # Teorema de intercepto para sacar el reflejo de B
-
+            x = A.x + ((B.y - A.y) / (C.y - A.y)) * (C.x - A.x)
+            D = V2(x, B.y)
+            self.flatBottomTriangle(A, B, D, color)
+            self.flatTopTriangle(D, B, C, color)
             pass
 
 
