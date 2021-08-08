@@ -1,16 +1,16 @@
 # Graphic library
 from collections import namedtuple
-from libs.zutils import char, word, dword, color, baryCoords
+from libs.zutils import char, word, dword, _color, baryCoords
 from libs import obj
 import random
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
-V3 = namedtuple('Point3', ['x', 'y', 'Z'])
+V3 = namedtuple('Point3', ['x', 'y', 'z'])
 
 # COLORS
-BLACK = color(0, 0, 0)
-WHITE = color(1, 1, 1)
+BLACK = _color(0, 0, 0)
+WHITE = _color(1, 1, 1)
 
 
 # Creación de clase para hacer renderizar
@@ -33,7 +33,7 @@ class Render(object):
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
-        self.clear_color = color(r, g, b)
+        self.clear_color = _color(r, g, b)
 
     # Limpiar pixeles de la pantalla (ponerlos todos en blanco o negro)
     def clear(self):
@@ -62,7 +62,7 @@ class Render(object):
 
     # --------- DRAW
     def drawColor(self, r, g, b):
-        self.draw_color = color(r/255, g/255, b/255)
+        self.draw_color = _color(r / 255, g / 255, b / 255)
 
     # Dibujar un punto con coordenadas normalizadas
     def drawPoint_NDC(self, x, y, color=None):
@@ -160,9 +160,15 @@ class Render(object):
             B, C = C, B
 
         if B.y == C.y:  # Triángulo normal → base inferior plana
-            self.flatBottomTriangle(A, B, C, color)
+            try:
+                self.flatBottomTriangle(A, B, C, color)
+            except:
+                pass
         elif A.y == B.y:  # Triángulo invertido → base superior plana
-            self.flatTopTriangle(A, B, C, color)
+            try:
+                self.flatTopTriangle(A, B, C, color)
+            except:
+                pass
         else:  # Triángulo irregular
             # 1. Dividir el triángulo en 2
             # 2. Dibujar ambos casos TN y TI
@@ -183,41 +189,52 @@ class Render(object):
         for x in range(x_min, x_max + 1):
             for y in range(y_min, y_max + 1):
                 u, v, w = baryCoords(A, B, C, V2(x, y))
-
                 if u >= 0 and v >= 0 and w >= 0:
+                    self.drawPoint(x, y, color)
                     # Conocer el valor de z
-                    z = A.z * u + B.z * v + C.z * w
-                    if z > self.zbuffer[x][y]:
-                        self.drawPoint(x, y)
-                        # Modifico el valor del zbuffer
-                        self.zbufer[x][y] = z
+                    # z = A.z * u + B.z * v + C.z * w
+                    # if z > self.zbuffer[x][y]:
+                    #     self.drawPoint(x, y)
+                    #     # Modifico el valor del zbuffer
+                    #     self.zbufer[x][y] = z
 
     # ----------- OBJ
     def loadModel(self, filename, scale=V2(1, 1), translate=V2(0.0, 0.0)):
 
         model = obj.obj(filename)
 
+        light = V3(0, 0, 1)
+
         # draw Model
         for face in model.faces:
             vertex_count = len(face)  # Guarda la cantidad de vertices en la cara
+            index0 = face[0][0] - 1  # Obtiene el vértice de cada x
+            index1 = face[1][0] - 1  # Obtiene el vértice de cada x
+            index2 = face[2][0] - 1  # Obtiene el vértice de cada x
 
-            if vertex_count == 3:
-                index0 = face[0][0] - 1  # Obtiene el vértice de cada x
-                index1 = face[1][0] - 1  # Obtiene el vértice de cada x
-                index2 = face[2][0] - 1  # Obtiene el vértice de cada x
+            vert0 = model.vertices[index0]
+            vert1 = model.vertices[index1]
+            vert2 = model.vertices[index2]
 
-                vert0 = model.vertices[index0]
-                vert1 = model.vertices[index1]
-                vert2 = model.vertices[index2]
+            a = V2(int(vert0[0] * scale.x + translate.x), int(vert0[1] * scale.y + translate.y))
+            b = V2(int(vert1[0] * scale.x + translate.x), int(vert1[1] * scale.y + translate.y))
+            c = V2(int(vert2[0] * scale.x + translate.x), int(vert2[1] * scale.y + translate.y))
 
-                a = V2(int(vert0[0] * scale.x + translate.x), int(vert0[1] * scale.y + translate.y))
-                b = V2(int(vert1[0] * scale.x + translate.x), int(vert1[1] * scale.y + translate.y))
-                c = V2(int(vert2[0] * scale.x + translate.x), int(vert2[1] * scale.y + translate.y))
+            # Susituir np por tu libreria de math
+            normal = np.cross(np.subtract(b, a), np.subtract(c, a))
+            normal = normal / np.linalg.norm(normal) # normalización
+            intensity = np.dot(normal, light)
 
-                self.drawTriangle(a, b, c, color(random.random(), random.random(),random.random()))
+            col = _color(intensity, intensity, intensity)
+            self.drawTriangle_bc(a, b, c, col)
 
+            if vertex_count == 4:
+                index3 = face[3][0] - 1  # Obtiene el vértice de cada x
+                vert3 = model.vertices[index3]
+                d = V2(int(vert3[0] * scale.x + translate.x), int(vert3[1] * scale.y + translate.y))
+                self.drawTriangle_bc(a, c, d, col)
 
-    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1,1,1)):
+    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1, 1, 1)):
         return V3(vertex[0] * scale.x + translate.x)
         return V3(vertex[0] * scale.y + translate.y)
         return V3(vertex[0] * scale.z + translate.z)
@@ -264,7 +281,7 @@ class Render(object):
             elif clase == 't':
                 if 144 <= y < 177:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
-                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y), color(0, 0, 0))
+                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y), _color(0, 0, 0))
                 elif 177 <= y < 180:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
 
@@ -272,6 +289,7 @@ class Render(object):
     Creación de bitmap
     @:arg filename: nombre del documento .bmp
     '''
+
     def end(self, filename):
         with open(filename, 'wb') as file:
             # Header
