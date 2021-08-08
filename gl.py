@@ -5,6 +5,7 @@ import obj
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
+V3 = namedtuple('Point3', ['x', 'y', 'Z'])
 
 
 # Permite asegurar que únicamente se utilize un byte
@@ -27,6 +28,11 @@ def color(r, g, b):
     # Comúnmente la tarjeta de video en colores acepta valor de 0 a 1
     # Y para convertirlo en byte se multiplica por 255
     return bytes([int(b * 255), int(g * 255), int(r * 255)])
+
+def baryCoords(A, B, C, P):
+    # u es para A, v es para B, w es para C
+    # ABC
+    ABC = ((B.y - C.y) * (A.x - C.x)  )
 
 
 # COLORS
@@ -60,6 +66,9 @@ class Render(object):
     def clear(self):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
+
+        # Revisar
+        self.zbufer = [[-float('inf') for y in range(self.height)] for x in range(self.width)]
 
     # Creación de la ventana
     def createWindow(self):
@@ -164,6 +173,11 @@ class Render(object):
 
                 self.drawLine(V2(x0, y0), V2(x1, y1))
 
+    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1,1,1)):
+        return V3(vertex[0] * scale.x + translate.x)
+        return V3(vertex[0] * scale.y + translate.y)
+        return V3(vertex[0] * scale.z + translate.z)
+
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):
         limit = len(polygon)
@@ -210,6 +224,31 @@ class Render(object):
                 elif 177 <= y < 180:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
 
+    # Dibujar triángulos
+    # ABC = (By - Cy)(Ax - Cx) + (Cx - Bx)(Ay * Cy) - área de un triángulo con vértices
+    # = || AB x AC ||
+
+    def drawTriangle_bc(self, A, B, C, color = None):
+        # Bounding Box → límites
+        y_max = round(max(A.y, B.y, C.y))
+        y_min = round(min(A.y, B.y, C.y))
+        x_max = round(max(A.x, B.x, C.x))
+        x_min = round(min(A.x, B.x, C.x))
+
+        for x in range(x_min, x_max + 1):
+            for y in range(y_min, y_max + 1):
+                u, v, w = baryCoords(A, B, C, V2(x, y))
+
+                if u >= 0 and v >= 0 and w >= 0:
+                    # Conocer el valor de z
+                    z = A.z * u + B.z * v + C.z * w
+                    if z > self.zbuffer[x][y]:
+                        self.drawPoint(x, y)
+                        # Modifico el valor del zbuffer
+                        self.zbufer[x][y] = z
+
+
+
     '''
     Creación de bitmap
     @:arg filename: nombre del documento .bmp
@@ -243,3 +282,6 @@ class Render(object):
             for y in range(self.height):
                 for x in range(self.width):
                     file.write(self.pixels[x][y])
+
+    # Cargar texturas
+
