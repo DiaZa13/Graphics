@@ -6,6 +6,6 @@ width = 960
 height = 700
 
 render = Render(width, height)
-render.drawTriangle(V2(10, 10), V2(190, 10), V2(100, 190))
+render.drawTriangle(V2(10, 190), V2(190, 190), V2(100, 10))
 
 render.end('output.bmp')

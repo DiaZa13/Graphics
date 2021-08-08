@@ -138,8 +138,16 @@ class Render(object):
             x1 += m21
             x2 += m31
 
-    def flatTopTriangle(self, v1, v2, v3):
-        pass
+    def flatTopTriangle(self, v1, v2, v3, color=None):
+        m31 = (v3.x - v1.x) / (v3.y - v1.y)
+        m32 = (v3.x - v2.x) / (v3.y - v2.y)
+        x1 = v3.x
+        x2 = v3.x
+
+        for y in range(v3.y, v1.y + 1):
+            self.drawLine(V2(int(x1), y), V2(int(x2), y), color)
+            x1 += m31
+            x2 += m32
 
 
     def drawTriangle(self, A, B, C, color=None):
@@ -156,9 +164,9 @@ class Render(object):
             B, C = C, B
 
         if B.y == C.y:  # Triángulo normal → base inferior plana
-            self.flatBottomTriangle(A, B, C)
+            self.flatBottomTriangle(A, B, C, color)
         elif A.y == B.y:  # Triángulo invertido → base superior plana
-            self.flatTopTriangle(A, B, C)
+            self.flatTopTriangle(A, B, C, color)
         else:  # Triángulo irregular
             # 1. Dividir el triángulo en 2
             # 2. Dibujar ambos casos TN y TI
