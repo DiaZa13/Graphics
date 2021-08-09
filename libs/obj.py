@@ -40,7 +40,7 @@ class obj(object):
 class Texture(object):
     def __init__(self, filename):
         self.file = filename
-        self.read
+        self.read()
 
     def read(self):
         # rb → abrir el archivo en modo lectura binario

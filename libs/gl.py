@@ -2,11 +2,12 @@
 from collections import namedtuple
 from libs.zutils import char, word, dword, _color, baryCoords
 from libs import obj
-import random
+from libs import zmath as zm
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
 V3 = namedtuple('Point3', ['x', 'y', 'z'])
+
 
 # COLORS
 BLACK = _color(0, 0, 0)
@@ -40,8 +41,7 @@ class Render(object):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
 
-        # Revisar
-        self.zbufer = [[-float('inf') for y in range(self.height)] for x in range(self.width)]
+        self.zbuffer = [[-float('inf') for y in range(self.height)] for x in range(self.width)]
 
     # Creación de la ventana
     def createWindow(self):
@@ -190,20 +190,24 @@ class Render(object):
             for y in range(y_min, y_max + 1):
                 u, v, w = baryCoords(A, B, C, V2(x, y))
                 if u >= 0 and v >= 0 and w >= 0:
-                    self.drawPoint(x, y, color)
                     # Conocer el valor de z
-                    # z = A.z * u + B.z * v + C.z * w
-                    # if z > self.zbuffer[x][y]:
-                    #     self.drawPoint(x, y)
-                    #     # Modifico el valor del zbuffer
-                    #     self.zbufer[x][y] = z
+                    z = A.z * u + B.z * v + C.z * w
+                    if z > self.zbuffer[x][y]:
+                        self.drawPoint(x, y, color)
+                        # Modifico el valor del zbuffer
+                        self.zbuffer[x][y] = z
 
     # ----------- OBJ
-    def loadModel(self, filename, scale=V2(1, 1), translate=V2(0.0, 0.0)):
+    # Transforma un vértice de acorde a la info que se le pase
+    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1, 1, 1)):
+        return V3((vertex[0] * scale.x + translate.x), (vertex[1] * scale.y + translate.y), (vertex[2] * scale.z + translate.z))
+
+    def loadModel(self, filename, scale=V3(1.0, 1.0, 1.0), translate=V3(0.0, 0.0, 0.0)):
 
         model = obj.obj(filename)
 
-        light = V3(0, 0, 1)
+        light = V3(0, 0, -1)
+        light = zm.normalize(light)
 
         # draw Model
         for face in model.faces:
@@ -216,14 +220,18 @@ class Render(object):
             vert1 = model.vertices[index1]
             vert2 = model.vertices[index2]
 
-            a = V2(int(vert0[0] * scale.x + translate.x), int(vert0[1] * scale.y + translate.y))
-            b = V2(int(vert1[0] * scale.x + translate.x), int(vert1[1] * scale.y + translate.y))
-            c = V2(int(vert2[0] * scale.x + translate.x), int(vert2[1] * scale.y + translate.y))
+            a = self.transform(vert0, translate, scale)
+            b = self.transform(vert1, translate, scale)
+            c = self.transform(vert2, translate, scale)
 
-            # Susituir np por tu libreria de math
-            normal = np.cross(np.subtract(b, a), np.subtract(c, a))
-            normal = normal / np.linalg.norm(normal) # normalización
-            intensity = np.dot(normal, light)
+            normal = zm.cross(zm.subtract(vert1, vert0), zm.subtract(vert2, vert0))
+            normal = zm.normalize(normal)  # normalización
+            intensity = zm.dot(normal, [-i for i in light])
+
+            if intensity > 1:
+                intensity = 1
+            elif intensity < 0:
+                intensity = 0
 
             col = _color(intensity, intensity, intensity)
             self.drawTriangle_bc(a, b, c, col)
@@ -231,13 +239,8 @@ class Render(object):
             if vertex_count == 4:
                 index3 = face[3][0] - 1  # Obtiene el vértice de cada x
                 vert3 = model.vertices[index3]
-                d = V2(int(vert3[0] * scale.x + translate.x), int(vert3[1] * scale.y + translate.y))
+                d = self.transform(vert3, translate, scale)
                 self.drawTriangle_bc(a, c, d, col)
-
-    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1, 1, 1)):
-        return V3(vertex[0] * scale.x + translate.x)
-        return V3(vertex[0] * scale.y + translate.y)
-        return V3(vertex[0] * scale.z + translate.z)
 
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):
