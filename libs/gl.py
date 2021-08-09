@@ -1,7 +1,7 @@
 # Graphic library
 from collections import namedtuple
 from libs.zutils import char, word, dword, _color, baryCoords
-from libs import obj
+from libs.obj import Obj, Texture
 from libs import zmath as zm
 
 # Creación de un tipo de variable para dibujar una línea
@@ -179,7 +179,7 @@ class Render(object):
             self.flatTopTriangle(D, B, C, color)
             pass
 
-    def drawTriangle_bc(self, A, B, C, color=None):
+    def drawTriangle_bc(self, A, B, C, textCoords=(), texture=None, color=None, intensity=1):
         # Bounding Box → límites
         y_max = round(max(A.y, B.y, C.y))
         y_min = round(min(A.y, B.y, C.y))
@@ -192,8 +192,17 @@ class Render(object):
                 if u >= 0 and v >= 0 and w >= 0:
                     # Conocer el valor de z
                     z = A.z * u + B.z * v + C.z * w
+
+                    # Calculo de coordenada de textura
+                    # Solo lo hace, si paso una textura
+                    if texture:
+                        tA, tB, tC = textCoords
+                        tx = tA[0] * u + tB[0] * v + tC[0] * w
+                        ty = tA[1] * u + tB[1] * v + tC[1] * w
+                        color = texture.getColor(tx, ty)  # Color de la textura en (x, y)
+
                     if z > self.zbuffer[x][y]:
-                        self.drawPoint(x, y, color)
+                        self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255), (color[0] * intensity / 255)))
                         # Modifico el valor del zbuffer
                         self.zbuffer[x][y] = z
 
@@ -202,9 +211,9 @@ class Render(object):
     def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1, 1, 1)):
         return V3((vertex[0] * scale.x + translate.x), (vertex[1] * scale.y + translate.y), (vertex[2] * scale.z + translate.z))
 
-    def loadModel(self, filename, scale=V3(1.0, 1.0, 1.0), translate=V3(0.0, 0.0, 0.0)):
+    def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0)):
 
-        model = obj.obj(filename)
+        model = Obj(filename)
 
         light = V3(0, 0, -1)
         light = zm.normalize(light)
@@ -212,18 +221,22 @@ class Render(object):
         # draw Model
         for face in model.faces:
             vertex_count = len(face)  # Guarda la cantidad de vertices en la cara
-            index0 = face[0][0] - 1  # Obtiene el vértice de cada x
-            index1 = face[1][0] - 1  # Obtiene el vértice de cada x
-            index2 = face[2][0] - 1  # Obtiene el vértice de cada x
+            # index2 = face[2][0] - 1  # Obtiene el vértice de cada x
 
-            vert0 = model.vertices[index0]
-            vert1 = model.vertices[index1]
-            vert2 = model.vertices[index2]
+            vert0 = model.vertices[face[0][0] - 1]
+            vert1 = model.vertices[face[1][0] - 1]
+            vert2 = model.vertices[face[2][0] - 1]
+
+            # Vértices de las coordenadas de textura
+            vt0 = model.textures[face[0][1] - 1]
+            vt1 = model.textures[face[1][1] - 1]
+            vt2 = model.textures[face[2][1] - 1]
 
             a = self.transform(vert0, translate, scale)
             b = self.transform(vert1, translate, scale)
             c = self.transform(vert2, translate, scale)
 
+            # Iluminación por polígono
             normal = zm.cross(zm.subtract(vert1, vert0), zm.subtract(vert2, vert0))
             normal = zm.normalize(normal)  # normalización
             intensity = zm.dot(normal, [-i for i in light])
@@ -233,14 +246,14 @@ class Render(object):
             elif intensity < 0:
                 intensity = 0
 
-            col = _color(intensity, intensity, intensity)
-            self.drawTriangle_bc(a, b, c, col)
+            # Implementación de texturas
+            self.drawTriangle_bc(a, b, c, textCoords=(vt0, vt1, vt2), texture=texture, intensity=intensity)
 
             if vertex_count == 4:
-                index3 = face[3][0] - 1  # Obtiene el vértice de cada x
-                vert3 = model.vertices[index3]
+                vert3 = model.vertices[face[3][0] - 1]
+                vt3 = model.textures[face[3][1] - 1]
                 d = self.transform(vert3, translate, scale)
-                self.drawTriangle_bc(a, c, d, col)
+                self.drawTriangle_bc(a, c, d, textCoords=(vt0, vt2, vt3), texture=texture, intensity=intensity)
 
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):
