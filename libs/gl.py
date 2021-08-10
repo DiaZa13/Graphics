@@ -249,7 +249,7 @@ class Render(object):
                                 [0, 0, 0, 1]])
 
         z_rotation = np.matrix([[np.cos(roll), -np.sin(roll), 0, 0],
-                                [np.sin(roll), -np.cos(roll), 0, 0],
+                                [np.sin(roll), np.cos(roll), 0, 0],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
 
@@ -262,12 +262,12 @@ class Render(object):
 
         translateMatrix = np.matrix([[1, 0, 0, translate.x],
                                       [0, 1, 0, translate.y],
-                                      [0, 1, 0, translate.z],
+                                      [0, 0, 1, translate.z],
                                       [0, 0, 0, 1]])
 
         scaleMatrix = np.matrix([[scale.x, 0, 0, 0],
                                  [0, scale.y, 0, 0],
-                                 [0, scale.z, 0, 0],
+                                 [0, 0,  scale.z, 0],
                                  [0, 0, 0, 1]])
 
         rotationMatrix = self.CreateRotationMatrix(rotate)
