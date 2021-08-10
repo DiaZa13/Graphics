@@ -4,10 +4,12 @@ from libs.zutils import char, word, dword, _color, baryCoords
 from libs.obj import Obj, Texture
 from libs import zmath as zm
 
+import numpy as np
+
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
 V3 = namedtuple('Point3', ['x', 'y', 'z'])
-
+V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 
 # COLORS
 BLACK = _color(0, 0, 0)
@@ -202,18 +204,81 @@ class Render(object):
                         color = texture.getColor(tx, ty)  # Color de la textura en (x, y)
 
                     if z > self.zbuffer[x][y]:
-                        self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255), (color[0] * intensity / 255)))
+                        self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255),
+                                                    (color[0] * intensity / 255)))
                         # Modifico el valor del zbuffer
                         self.zbuffer[x][y] = z
 
     # ----------- OBJ
     # Transforma un vértice de acorde a la info que se le pase
-    def transform(self, vertex, translate=V3(0, 0, 0), scale=V3(1, 1, 1)):
-        return V3((vertex[0] * scale.x + translate.x), (vertex[1] * scale.y + translate.y), (vertex[2] * scale.z + translate.z))
+    def transform(self, vertex, modelMatrix):
+        newVertex = V4(vertex[0], vertex[1], vertex[2], 1)
+        # @ → Multiplicación de matriz con vector
+        # Revisar overload de operadores python
+        transVertex = modelMatrix @ newVertex
 
-    def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0)):
+        # Cosa de numpy → mejorar en implementación
+        transVertex = transVertex.tolist()[0]
+
+        transVertex = V3((transVertex[0] / transVertex[3]),
+                         (transVertex[1] / transVertex[3]),
+                         (transVertex[2] / transVertex[3]))
+
+        return transVertex
+
+        # Pitch → rotación en x
+        # Roll → rotación en z (movimiento de lado a lado)
+        # Yaw → rotación en y
+        # Crea cada una de las matrices de rotación
+        # Los ángulos de rotación se pasan en grados
+
+    def CreateRotationMatrix(self, rotate=V3(0, 0, 0)):
+        pitch = np.deg2rad(rotate.x)
+        yaw = np.deg2rad(rotate.y)
+        roll = np.deg2rad(rotate.z)
+
+        # Sen y Cos sí se puede usar de numpy o math
+        x_rotation = np.matrix([[1, 0, 0, 0],
+                                [0, np.cos(pitch), -np.sin(pitch), 0],
+                                [0, np.sin(pitch), np.cos(pitch), 0],
+                                [0, 0, 0, 1]])
+
+        y_rotation = np.matrix([[np.cos(yaw), 0, np.sin(yaw), 0],
+                                [0, 1, 0, 0],
+                                [-np.sin(yaw), 0, np.cos(yaw), 0],
+                                [0, 0, 0, 1]])
+
+        z_rotation = np.matrix([[np.cos(roll), -np.sin(roll), 0, 0],
+                                [np.sin(roll), -np.cos(roll), 0, 0],
+                                [0, 0, 1, 0],
+                                [0, 0, 0, 1]])
+
+        return x_rotation * y_rotation * z_rotation
+
+    # Crea la matriz de objeto
+    def objectMatriz(self, translate=V3(0, 0, 0), scale=V3(1, 1, 1), rotate=V3(0, 0, 0)):
+        # Se crea una matriz de traslación ya que permite la multiplicación entre las matrices y devolver el mismo
+        # Resultado que la suma con el punto
+
+        translateMatrix = np.matrix([[1, 0, 0, translate.x],
+                                      [0, 1, 0, translate.y],
+                                      [0, 1, 0, translate.z],
+                                      [0, 0, 0, 1]])
+
+        scaleMatrix = np.matrix([[scale.x, 0, 0, 0],
+                                 [0, scale.y, 0, 0],
+                                 [0, scale.z, 0, 0],
+                                 [0, 0, 0, 1]])
+
+        rotationMatrix = self.CreateRotationMatrix(rotate)
+
+        return translateMatrix * rotationMatrix * scaleMatrix
+
+    def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
 
         model = Obj(filename)
+
+        modelMatrix = self.objectMatriz(translate, scale, rotate)
 
         light = V3(0, 0, -1)
         light = zm.normalize(light)
@@ -232,9 +297,9 @@ class Render(object):
             vt1 = model.textures[face[1][1] - 1]
             vt2 = model.textures[face[2][1] - 1]
 
-            a = self.transform(vert0, translate, scale)
-            b = self.transform(vert1, translate, scale)
-            c = self.transform(vert2, translate, scale)
+            a = self.transform(vert0, modelMatrix)
+            b = self.transform(vert1, modelMatrix)
+            c = self.transform(vert2, modelMatrix)
 
             # Iluminación por polígono
             normal = zm.cross(zm.subtract(vert1, vert0), zm.subtract(vert2, vert0))
@@ -252,7 +317,7 @@ class Render(object):
             if vertex_count == 4:
                 vert3 = model.vertices[face[3][0] - 1]
                 vt3 = model.textures[face[3][1] - 1]
-                d = self.transform(vert3, translate, scale)
+                d = self.transform(vert3, modelMatrix)
                 self.drawTriangle_bc(a, c, d, textCoords=(vt0, vt2, vt3), texture=texture, intensity=intensity)
 
     # Rellenado de polígonos
