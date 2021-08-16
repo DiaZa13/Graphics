@@ -97,10 +97,9 @@ class Matrix(object):
                         x += self.matrix[y][b] * other.matrix[b][a]
                     c.matrix[y][a] = x
 
-            return c.matrix
-
         # Valida si el segundo argumento es un vector
-        elif isinstance(other, (V3, V4)):
+        # Arreglar validación para que verifique si es una instancia de V3 o V4
+        else:
             c = Matrix([[0 for x in range(self.rows)] for y in range(1)])
             rows = len(other)
             if self.cols != rows:
@@ -111,7 +110,7 @@ class Matrix(object):
                     x += self.matrix[y][a] * other[a]
                 c.matrix[0][y] = x
 
-                return c.matrix[0]
+        return c
 
     # Elimina una fila o columna de una matrix
     def delete(self, obj, axis=None):
@@ -230,6 +229,54 @@ class Matrix(object):
             for x in range(self.cols):
                 result.matrix[y][x] = adj[y][x] / det
 
-        return result.matrix
+        return result
 
 
+a = Matrix([[5, 3, -4, -2],
+            [8, -1, 0, -3]])
+
+b = Matrix([[1, 4, 0, 0],
+            [-5, 3, 7, 5],
+            [0, -9, 5, 0],
+            [5, 1, 4, 0]])
+
+# ([[6, 3, -2, 4],
+#             [2, 0, 0, 0],
+#             [1, 5, 2, 2],
+#             [-1, 1, 3, -1]])
+
+b = Matrix([[0, 4, -2, 4],
+            [-6, 2, -10, 0],
+            [5, 8, -5, 2],
+            [0, -2, 1, 0]])
+
+aaa = Matrix([[1, -3, 0, -2],
+            [3, -12, -2, -6],
+            [-2, 10, 2, 5],
+            [-1, 6, 1, 3]])
+
+bx = np.matrix([[0, 4, -2, 4],
+            [-6, 2, -10, 0],
+            [5, 8, -5, 2],
+            [0, -2, 1, 0]])
+
+ax = V4(5, 3, -4, 8)
+
+c = Matrix([[2, -2, 2],
+            [2, 1, 0],
+            [3, -2, 2]])
+
+# bx = Matrix([[1, 4, 0],
+#              [-5, 3, 7],
+#              [0, -9, 5],
+#              [5, 1, 4]])
+
+# result = bx @ ax
+# print(result)
+# test = b.det()
+# testing = np.linalg.det(bx)
+# det = c.det()
+# test = c.transpose()
+# testing = c.inv()
+# print(testing)
+# print(det)

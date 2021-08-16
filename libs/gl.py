@@ -26,13 +26,10 @@ class Render(object):
         # Window size
         self.width = width
         self.height = height
-        # Viewport size
-        # self.vw_width = vw_width
-        # self.vw_height = vw_height
-        # self.vw_x = x
-        # self.vw_y = y
-        # Create a new window
+        self.CreateViewMatrix()
         self.createWindow()
+
+
 
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
@@ -44,7 +41,7 @@ class Render(object):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
 
-        self.zbuffer = [[-float('inf') for y in range(self.height)] for x in range(self.width)]
+        self.zbuffer = [[float('inf') for y in range(self.height)] for x in range(self.width)]
 
     # Creación de la ventana
     def createWindow(self):
@@ -64,11 +61,12 @@ class Render(object):
                 self.pixels[a][b] = color or self.clear_color
 
         # Servirá para convertir coordenadas normalizadas en posiciones dentro del viewport
-        self.viewportMatrix = np.matrix([[width/2, 0, 0, x + width/2],
+        self.viewportMatrix = zm.Matrix([[width/2, 0, 0, x + width/2],
                                          [0, height/2, 0, y + height/2],
                                          [0, 0, 0.5, 0.5],
                                          [0, 0, 0, 1]])
 
+        self.CreateProjectionMatrix()
     # --------- DRAW
     def drawColor(self, r, g, b):
         self.draw_color = _color(r / 255, g / 255, b / 255)
@@ -210,11 +208,12 @@ class Render(object):
                         ty = tA[1] * u + tB[1] * v + tC[1] * w
                         color = texture.getColor(tx, ty)  # Color de la textura en (x, y)
 
-                    if z > self.zbuffer[x][y]:
-                        self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255),
-                                                    (color[0] * intensity / 255)))
-                        # Modifico el valor del zbuffer
-                        self.zbuffer[x][y] = z
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        if z < self.zbuffer[x][y] and z <= 1 >= -1:
+                            self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255),
+                                                        (color[0] * intensity / 255)))
+                            # Modifico el valor del zbuffer
+                            self.zbuffer[x][y] = z
 
     # ----------- OBJ
     # Transforma un vértice de acorde a la info que se le pase
@@ -222,10 +221,11 @@ class Render(object):
         newVertex = V4(vertex[0], vertex[1], vertex[2], 1)
         # @ → Multiplicación de matriz con vector
         # Revisar overload de operadores python
-        transVertex = self.projectionMatrix @ modelMatrix @ newVertex
+        transVertex = modelMatrix @ newVertex
 
-        # Cosa de numpy → mejorar en implementación
-        transVertex = transVertex.tolist()[0]
+        # __matmul__ de zm.matrix devuelve un objeto, para devolver la matriz
+        # se usa .matrix y para obtener el vector
+        transVertex = transVertex.matrix[0]
 
         transVertex = V3((transVertex[0] / transVertex[3]),
                          (transVertex[1] / transVertex[3]),
@@ -233,12 +233,27 @@ class Render(object):
 
         return transVertex
 
-        # Pitch → rotación en x
-        # Roll → rotación en z (movimiento de lado a lado)
-        # Yaw → rotación en y
-        # Crea cada una de las matrices de rotación
-        # Los ángulos de rotación se pasan en grados
+    def camTransform(self, vertex):
+        newVertex = V4(vertex[0], vertex[1], vertex[2], 1)
+        # @ → Multiplicación de matriz con vector
+        # Revisar overload de operadores python
+        transVertex = self.viewportMatrix @ self.projectionMatrix @ self.viewMatrix @ newVertex
 
+        # __matmul__ de zm.matrix devuelve un objeto, para devolver la matriz
+        # se usa .matrix y para obtener el vector
+        transVertex = transVertex.matrix[0]
+
+        transVertex = V3((transVertex[0] / transVertex[3]),
+                         (transVertex[1] / transVertex[3]),
+                         (transVertex[2] / transVertex[3]))
+
+        return transVertex
+
+    # Pitch → rotación en x
+    # Roll → rotación en z (movimiento de lado a lado)
+    # Yaw → rotación en y
+    # Crea cada una de las matrices de rotación
+    # Los ángulos de rotación se pasan en grados
     def CreateRotationMatrix(self, rotate=V3(0, 0, 0)):
         pitch = zm.deg2rad(rotate.x)
         yaw = zm.deg2rad(rotate.y)
@@ -246,31 +261,31 @@ class Render(object):
 
         # Sen y Cos sí se puede usar de numpy o math
         x_rotation = zm.Matrix([[1, 0, 0, 0],
-                                [0, np.cos(pitch), -np.sin(pitch), 0],
-                                [0, np.sin(pitch), np.cos(pitch), 0],
+                                [0, cos(pitch), -sin(pitch), 0],
+                                [0, sin(pitch), cos(pitch), 0],
                                 [0, 0, 0, 1]])
 
-        y_rotation = zm.Matrix([[np.cos(yaw), 0, np.sin(yaw), 0],
+        y_rotation = zm.Matrix([[cos(yaw), 0, sin(yaw), 0],
                                 [0, 1, 0, 0],
-                                [-np.sin(yaw), 0, np.cos(yaw), 0],
+                                [-sin(yaw), 0, cos(yaw), 0],
                                 [0, 0, 0, 1]])
 
-        z_rotation = zm.Matrix([[np.cos(roll), -np.sin(roll), 0, 0],
-                                [np.sin(roll), np.cos(roll), 0, 0],
+        z_rotation = zm.Matrix([[cos(roll), -sin(roll), 0, 0],
+                                [sin(roll), cos(roll), 0, 0],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
 
-        return x_rotation * y_rotation * z_rotation
+        return x_rotation @ y_rotation @ z_rotation
 
     # Crea la matriz de objeto
     def objectMatriz(self, translate=V3(0, 0, 0), scale=V3(1, 1, 1), rotate=V3(0, 0, 0)):
         # Se crea una matriz de traslación ya que permite la multiplicación entre las matrices y devolver el mismo
-        # Resultado que la suma con el punto
+        # Resultado que la suma con el vértice
 
         translateMatrix = zm.Matrix([[1, 0, 0, translate.x],
-                                      [0, 1, 0, translate.y],
-                                      [0, 0, 1, translate.z],
-                                      [0, 0, 0, 1]])
+                                     [0, 1, 0, translate.y],
+                                     [0, 0, 1, translate.z],
+                                     [0, 0, 0, 1]])
 
         scaleMatrix = zm.Matrix([[scale.x, 0, 0, 0],
                                  [0, scale.y, 0, 0],
@@ -279,23 +294,42 @@ class Render(object):
 
         rotationMatrix = self.CreateRotationMatrix(rotate)
 
-        return translateMatrix * rotationMatrix * scaleMatrix
+        return translateMatrix @ rotationMatrix @ scaleMatrix
 
-    def viewMatrix(self, translate=V3(0, 0, 0)):
-        pass
+    def CreateViewMatrix(self, translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
+        camMatrix = self.objectMatriz(translate, V3(1, 1, 1), rotate)
+        self.viewMatrix = camMatrix.inv()
+
+    def lookAt(self, eye, camPosition=V3(0, 0, 0)):
+        forward = zm.subtract(camPosition, eye)
+        forward = zm.normalize(forward)
+
+        right = zm.cross(V3(0, 1, 0), forward)
+        right = zm.normalize(right)
+
+        up = zm.cross(forward, right)
+        up = zm.normalize(up)
+
+        camMatrix = zm.Matrix([[right[0], up[0], forward[0], camPosition.x],
+                               [right[1], up[1], forward[1], camPosition.y],
+                               [right[2], up[2], forward[2], camPosition.z],
+                               [0, 0, 0, 1]])
+
+        self.viewMatrix = camMatrix.inv()
+
     # n → distancia más cercana al near plane, todo lo que está más cerca de n no se dibuja
     # f → todo lo que está mas alla de f no se dibuja
     # fov → ángulo de vista, está en grados
-    def perspectiveMatrix(self, n=0.1, f=1000, fov=60):
+    def CreateProjectionMatrix(self, n=0.1, f=1000, fov=60):
         aRatio = self.vw_width/self.vw_height
         t = tan(zm.deg2rad(fov)/2) * n
         r = t * aRatio
 
+        # Convierte los vértices de -1 a 1
         self.projectionMatrix = zm.Matrix([[n/r, 0, 0, 0],
                                            [0, n/t, 0, 0],
                                            [0, 0, -((f + n)/(f - n)), -((2 * f * n)/(f - n))],
                                            [0, 0, -1, 0]])
-
 
     def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
 
@@ -323,9 +357,14 @@ class Render(object):
             a = self.transform(vert0, modelMatrix)
             b = self.transform(vert1, modelMatrix)
             c = self.transform(vert2, modelMatrix)
+            # En caso de que tenga 4 vertices
+            if vertex_count == 4:
+                vert3 = model.vertices[face[3][0] - 1]
+                vt3 = model.textures[face[3][1] - 1]
+                d = self.transform(vert3, modelMatrix)
 
             # Iluminación por polígono
-            normal = zm.cross(zm.subtract(vert1, vert0), zm.subtract(vert2, vert0))
+            normal = zm.cross(zm.subtract(b, a), zm.subtract(c, a))
             normal = zm.normalize(normal)  # normalización
             intensity = zm.dot(normal, [-i for i in light])
 
@@ -334,13 +373,16 @@ class Render(object):
             elif intensity < 0:
                 intensity = 0
 
+            a = self.camTransform(a)
+            b = self.camTransform(b)
+            c = self.camTransform(c)
+            if vertex_count == 4:
+                d = self.camTransform(d)
+
             # Implementación de texturas
             self.drawTriangle_bc(a, b, c, textCoords=(vt0, vt1, vt2), texture=texture, intensity=intensity)
 
             if vertex_count == 4:
-                vert3 = model.vertices[face[3][0] - 1]
-                vt3 = model.textures[face[3][1] - 1]
-                d = self.transform(vert3, modelMatrix)
                 self.drawTriangle_bc(a, c, d, textCoords=(vt0, vt2, vt3), texture=texture, intensity=intensity)
 
     # Rellenado de polígonos
