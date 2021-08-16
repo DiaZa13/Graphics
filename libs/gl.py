@@ -5,6 +5,7 @@ from libs.obj import Obj, Texture
 from libs import zmath as zm
 
 import numpy as np
+from numpy import cos, sin, tan
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -61,6 +62,12 @@ class Render(object):
         for a in range(int(x), (self.vw_width + int(x) + 1)):
             for b in range(int(y), (self.vw_height + int(y) + 1)):
                 self.pixels[a][b] = color or self.clear_color
+
+        # Servirá para convertir coordenadas normalizadas en posiciones dentro del viewport
+        self.viewportMatrix = np.matrix([[width/2, 0, 0, x + width/2],
+                                         [0, height/2, 0, y + height/2],
+                                         [0, 0, 0.5, 0.5],
+                                         [0, 0, 0, 1]])
 
     # --------- DRAW
     def drawColor(self, r, g, b):
@@ -215,7 +222,7 @@ class Render(object):
         newVertex = V4(vertex[0], vertex[1], vertex[2], 1)
         # @ → Multiplicación de matriz con vector
         # Revisar overload de operadores python
-        transVertex = modelMatrix @ newVertex
+        transVertex = self.projectionMatrix @ modelMatrix @ newVertex
 
         # Cosa de numpy → mejorar en implementación
         transVertex = transVertex.tolist()[0]
@@ -233,22 +240,22 @@ class Render(object):
         # Los ángulos de rotación se pasan en grados
 
     def CreateRotationMatrix(self, rotate=V3(0, 0, 0)):
-        pitch = np.deg2rad(rotate.x)
-        yaw = np.deg2rad(rotate.y)
-        roll = np.deg2rad(rotate.z)
+        pitch = zm.deg2rad(rotate.x)
+        yaw = zm.deg2rad(rotate.y)
+        roll = zm.deg2rad(rotate.z)
 
         # Sen y Cos sí se puede usar de numpy o math
-        x_rotation = np.matrix([[1, 0, 0, 0],
+        x_rotation = zm.Matrix([[1, 0, 0, 0],
                                 [0, np.cos(pitch), -np.sin(pitch), 0],
                                 [0, np.sin(pitch), np.cos(pitch), 0],
                                 [0, 0, 0, 1]])
 
-        y_rotation = np.matrix([[np.cos(yaw), 0, np.sin(yaw), 0],
+        y_rotation = zm.Matrix([[np.cos(yaw), 0, np.sin(yaw), 0],
                                 [0, 1, 0, 0],
                                 [-np.sin(yaw), 0, np.cos(yaw), 0],
                                 [0, 0, 0, 1]])
 
-        z_rotation = np.matrix([[np.cos(roll), -np.sin(roll), 0, 0],
+        z_rotation = zm.Matrix([[np.cos(roll), -np.sin(roll), 0, 0],
                                 [np.sin(roll), np.cos(roll), 0, 0],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
@@ -260,12 +267,12 @@ class Render(object):
         # Se crea una matriz de traslación ya que permite la multiplicación entre las matrices y devolver el mismo
         # Resultado que la suma con el punto
 
-        translateMatrix = np.matrix([[1, 0, 0, translate.x],
+        translateMatrix = zm.Matrix([[1, 0, 0, translate.x],
                                       [0, 1, 0, translate.y],
                                       [0, 0, 1, translate.z],
                                       [0, 0, 0, 1]])
 
-        scaleMatrix = np.matrix([[scale.x, 0, 0, 0],
+        scaleMatrix = zm.Matrix([[scale.x, 0, 0, 0],
                                  [0, scale.y, 0, 0],
                                  [0, 0,  scale.z, 0],
                                  [0, 0, 0, 1]])
@@ -273,6 +280,22 @@ class Render(object):
         rotationMatrix = self.CreateRotationMatrix(rotate)
 
         return translateMatrix * rotationMatrix * scaleMatrix
+
+    def viewMatrix(self, translate=V3(0, 0, 0)):
+        pass
+    # n → distancia más cercana al near plane, todo lo que está más cerca de n no se dibuja
+    # f → todo lo que está mas alla de f no se dibuja
+    # fov → ángulo de vista, está en grados
+    def perspectiveMatrix(self, n=0.1, f=1000, fov=60):
+        aRatio = self.vw_width/self.vw_height
+        t = tan(zm.deg2rad(fov)/2) * n
+        r = t * aRatio
+
+        self.projectionMatrix = zm.Matrix([[n/r, 0, 0, 0],
+                                           [0, n/t, 0, 0],
+                                           [0, 0, -((f + n)/(f - n)), -((2 * f * n)/(f - n))],
+                                           [0, 0, -1, 0]])
+
 
     def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
 
