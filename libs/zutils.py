@@ -37,3 +37,24 @@ def baryCoords(A, B, C, P):
         return -1, -1, -1
 
     return u, v, w
+
+
+# # Por si se usan los vértices puros sin transformación
+# vert0 = model.vertices[face[0][0] - 1]
+# vert1 = model.vertices[face[1][0] - 1]
+# vert2 = model.vertices[face[2][0] - 1]
+#
+# # Coordenadas de textura
+# vt0 = model.textures[face[0][1] - 1]
+# vt1 = model.textures[face[1][1] - 1]
+# vt2 = model.textures[face[2][1] - 1]
+#
+# # Transformación de vértices por la matriz del modelo
+# _a = self.transform(vert0, modelMatrix)
+# _b = self.transform(vert1, modelMatrix)
+# _c = self.transform(vert2, modelMatrix)
+# # En caso de que tenga 4 vertices
+# if vertex_count == 4:
+#     vert3 = model.vertices[face[3][0] - 1]
+#     vt3 = model.textures[face[3][1] - 1]
+#     _d = self.transform(vert3, modelMatrix)

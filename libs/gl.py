@@ -29,7 +29,11 @@ class Render(object):
         self.CreateViewMatrix()
         self.createWindow()
 
-
+        # Textura y shader que se estén usando en ese momento
+        self.active_texture = None
+        self.active_shader = None
+        # Dirección de luz original
+        self.directional_light = V3(0, 0, -1)
 
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
@@ -61,12 +65,13 @@ class Render(object):
                 self.pixels[a][b] = color or self.clear_color
 
         # Servirá para convertir coordenadas normalizadas en posiciones dentro del viewport
-        self.viewportMatrix = zm.Matrix([[width/2, 0, 0, x + width/2],
-                                         [0, height/2, 0, y + height/2],
+        self.viewportMatrix = zm.Matrix([[width / 2, 0, 0, x + width / 2],
+                                         [0, height / 2, 0, y + height / 2],
                                          [0, 0, 0.5, 0.5],
                                          [0, 0, 0, 1]])
 
         self.CreateProjectionMatrix()
+
     # --------- DRAW
     def drawColor(self, r, g, b):
         self.draw_color = _color(r / 255, g / 255, b / 255)
@@ -186,7 +191,7 @@ class Render(object):
             self.flatTopTriangle(D, B, C, color)
             pass
 
-    def drawTriangle_bc(self, A, B, C, textCoords=(), texture=None, color=None, intensity=1):
+    def drawTriangle_bc(self, A, B, C, textCoords=(), normals=(), vertx=(), color=None):
         # Bounding Box → límites
         y_max = round(max(A.y, B.y, C.y))
         y_min = round(min(A.y, B.y, C.y))
@@ -202,22 +207,31 @@ class Render(object):
 
                     # Calculo de coordenada de textura
                     # Solo lo hace, si paso una textura
-                    if texture:
-                        tA, tB, tC = textCoords
-                        tx = tA[0] * u + tB[0] * v + tC[0] * w
-                        ty = tA[1] * u + tB[1] * v + tC[1] * w
-                        color = texture.getColor(tx, ty)  # Color de la textura en (x, y)
-
                     if 0 <= x < self.width and 0 <= y < self.height:
                         if z < self.zbuffer[x][y] and z <= 1 >= -1:
-                            self.drawPoint(x, y, _color((color[2] * intensity / 255), (color[1] * intensity / 255),
-                                                        (color[0] * intensity / 255)))
+                            if self.active_shader:
+                                r, g, b = self.active_shader(self,
+                                                             baryCoords=(u, v, w),
+                                                             textCoords=textCoords,
+                                                             color=color or self.draw_color,
+                                                             vertx=vertx,
+                                                             normals=normals)
+
+                            else:
+                                # Para que utilice un color en caso de que no exista shader
+                                b, g, r = color or self.draw_color
+                                b /= 255
+                                g /= 255
+                                r /= 255
+
+                            self.drawPoint(x, y, _color(r, g, b))
                             # Modifico el valor del zbuffer
                             self.zbuffer[x][y] = z
 
     # ----------- OBJ
     # Transforma un vértice de acorde a la info que se le pase
-    def transform(self, vertex, modelMatrix):
+    @staticmethod
+    def transform(vertex, modelMatrix):
         newVertex = V4(vertex[0], vertex[1], vertex[2], 1)
         # @ → Multiplicación de matriz con vector
         # Revisar overload de operadores python
@@ -230,6 +244,20 @@ class Render(object):
         transVertex = V3((transVertex[0] / transVertex[3]),
                          (transVertex[1] / transVertex[3]),
                          (transVertex[2] / transVertex[3]))
+
+        return transVertex
+
+    # Transforma la dirección de una vértice
+    @staticmethod
+    def transform_direction(vertex, modelMatrix):
+        newVertex = V4(vertex[0], vertex[1], vertex[2], 0)
+        transVertex = modelMatrix @ newVertex
+
+        transVertex = transVertex.matrix[0]
+
+        transVertex = V3((transVertex[0]),
+                         (transVertex[1]),
+                         (transVertex[2]))
 
         return transVertex
 
@@ -254,7 +282,8 @@ class Render(object):
     # Yaw → rotación en y
     # Crea cada una de las matrices de rotación
     # Los ángulos de rotación se pasan en grados
-    def CreateRotationMatrix(self, rotate=V3(0, 0, 0)):
+    @staticmethod
+    def CreateRotationMatrix(rotate=V3(0, 0, 0)):
         pitch = zm.deg2rad(rotate.x)
         yaw = zm.deg2rad(rotate.y)
         roll = zm.deg2rad(rotate.z)
@@ -289,7 +318,7 @@ class Render(object):
 
         scaleMatrix = zm.Matrix([[scale.x, 0, 0, 0],
                                  [0, scale.y, 0, 0],
-                                 [0, 0,  scale.z, 0],
+                                 [0, 0, scale.z, 0],
                                  [0, 0, 0, 1]])
 
         rotationMatrix = self.CreateRotationMatrix(rotate)
@@ -321,69 +350,54 @@ class Render(object):
     # f → todo lo que está mas alla de f no se dibuja
     # fov → ángulo de vista, está en grados
     def CreateProjectionMatrix(self, n=0.1, f=1000, fov=60):
-        aRatio = self.vw_width/self.vw_height
-        t = tan(zm.deg2rad(fov)/2) * n
+        aRatio = self.vw_width / self.vw_height
+        t = tan(zm.deg2rad(fov) / 2) * n
         r = t * aRatio
 
         # Convierte los vértices de -1 a 1
-        self.projectionMatrix = zm.Matrix([[n/r, 0, 0, 0],
-                                           [0, n/t, 0, 0],
-                                           [0, 0, -((f + n)/(f - n)), -((2 * f * n)/(f - n))],
+        self.projectionMatrix = zm.Matrix([[n / r, 0, 0, 0],
+                                           [0, n / t, 0, 0],
+                                           [0, 0, -((f + n) / (f - n)), -((2 * f * n) / (f - n))],
                                            [0, 0, -1, 0]])
 
-    def loadModel(self, filename, texture=None, scale=V3(1, 1, 1), translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
+    def loadModel(self, filename, scale=V3(1, 1, 1), translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
 
         model = Obj(filename)
-
         modelMatrix = self.objectMatriz(translate, scale, rotate)
-
-        light = V3(0, 0, -1)
-        light = zm.normalize(light)
+        rotationMatrix = self.CreateRotationMatrix(rotate)
 
         # draw Model
         for face in model.faces:
             vertex_count = len(face)  # Guarda la cantidad de vertices en la cara
-            # index2 = face[2][0] - 1  # Obtiene el vértice de cada x
 
-            vert0 = model.vertices[face[0][0] - 1]
-            vert1 = model.vertices[face[1][0] - 1]
-            vert2 = model.vertices[face[2][0] - 1]
+            # Vértices transformados por la matriz del modelo
+            vert, vt, vn = [], [], []
+            for i in range(vertex_count):
+                vertex = model.vertices[face[i][0] - 1]
+                a = self.transform(vertex, modelMatrix)
+                vert.append(a)
+                # Coordenadas de textura
+                vt.append(model.textures[face[i][1] - 1])
+                # Normales
+                # Las normales que devuelve el modelo son antes de haber
+                # rotado el objeto. Para tener las normales correctas
+                # hay que asegurar que también están rotadas
+                normal = model.normals[face[i][2] - 1]
+                a = self.transform_direction(normal, rotationMatrix)
+                vn.append(a)
 
-            # Vértices de las coordenadas de textura
-            vt0 = model.textures[face[0][1] - 1]
-            vt1 = model.textures[face[1][1] - 1]
-            vt2 = model.textures[face[2][1] - 1]
-
-            a = self.transform(vert0, modelMatrix)
-            b = self.transform(vert1, modelMatrix)
-            c = self.transform(vert2, modelMatrix)
-            # En caso de que tenga 4 vertices
+            # Transformación de vértices por la cámara
+            a = self.camTransform(vert[0])
+            b = self.camTransform(vert[1])
+            c = self.camTransform(vert[2])
             if vertex_count == 4:
-                vert3 = model.vertices[face[3][0] - 1]
-                vt3 = model.textures[face[3][1] - 1]
-                d = self.transform(vert3, modelMatrix)
+                d = self.camTransform(vert[3])
 
-            # Iluminación por polígono
-            normal = zm.cross(zm.subtract(b, a), zm.subtract(c, a))
-            normal = zm.normalize(normal)  # normalización
-            intensity = zm.dot(normal, [-i for i in light])
-
-            if intensity > 1:
-                intensity = 1
-            elif intensity < 0:
-                intensity = 0
-
-            a = self.camTransform(a)
-            b = self.camTransform(b)
-            c = self.camTransform(c)
-            if vertex_count == 4:
-                d = self.camTransform(d)
-
-            # Implementación de texturas
-            self.drawTriangle_bc(a, b, c, textCoords=(vt0, vt1, vt2), texture=texture, intensity=intensity)
+            # Dibuja los vértices
+            self.drawTriangle_bc(a, b, c, textCoords=(vt[0], vt[1], vt[2]), normals=(vn[0], vn[1], vn[2]), vertx=(vert[0], vert[1], vert[2]))
 
             if vertex_count == 4:
-                self.drawTriangle_bc(a, c, d, textCoords=(vt0, vt2, vt3), texture=texture, intensity=intensity)
+                self.drawTriangle_bc(a, c, d, textCoords=(vt[0], vt[2], vt[3]), normals=(vn[0], vn[2], vn[3]), vertx=(vert[0], vert[1], vert[2]))
 
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):
