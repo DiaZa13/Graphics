@@ -5,21 +5,22 @@ from libs.shaders import *
 
 # Variables
 width = 940
-height = 800
+height = 540
 
 render = Render(width, height)
 render.active_shader = flat_shader
-modelPosition = V3(-3, 3, -10)
-render.loadModel('models/among_us.obj',
-                 scale=V3(0.05, 0.05, 0.05),
+# render.active_texture = Texture('textures/orange.bmp')
+modelPosition = V3(-3, 0, -10)
+render.loadModel('models/orange.obj',
+                 scale=V3(0.1, 0.1, 0.1),
                  translate=modelPosition,
                  rotate=V3(0, 0, 0))
 
-render.active_shader = gourad_shader
-modelPosition = V3(3, 3, -10)
-render.loadModel('models/among_us.obj',
-                 scale=V3(0.05, 0.05, 0.05),
-                 translate=modelPosition,
-                 rotate=V3(0, 0, 0))
+# render.active_shader = gourad_shader
+# modelPosition = V3(3, 0, -10)
+# render.loadModel('models/.obj',
+#                  scale=V3(0.1, 0.1, 0.1),
+#                  translate=modelPosition,
+#                  rotate=V3(0, 0, 0))
 
 render.end('output.bmp')

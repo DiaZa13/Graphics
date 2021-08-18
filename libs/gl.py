@@ -394,10 +394,12 @@ class Render(object):
                 d = self.camTransform(vert[3])
 
             # Dibuja los vértices
-            self.drawTriangle_bc(a, b, c, textCoords=(vt[0], vt[1], vt[2]), normals=(vn[0], vn[1], vn[2]), vertx=(vert[0], vert[1], vert[2]))
+            self.drawTriangle_bc(a, b, c, textCoords=(vt[0], vt[1], vt[2]), normals=(vn[0], vn[1], vn[2]),
+                                 vertx=(vert[0], vert[1], vert[2]))
 
             if vertex_count == 4:
-                self.drawTriangle_bc(a, c, d, textCoords=(vt[0], vt[2], vt[3]), normals=(vn[0], vn[2], vn[3]), vertx=(vert[0], vert[1], vert[2]))
+                self.drawTriangle_bc(a, c, d, textCoords=(vt[0], vt[2], vt[3]), normals=(vn[0], vn[2], vn[3]),
+                                     vertx=(vert[0], vert[1], vert[2]))
 
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):
