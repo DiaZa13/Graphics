@@ -31,6 +31,7 @@ class Render(object):
 
         # Textura y shader que se estén usando en ese momento
         self.active_texture = None
+        self.active_texture2 = None
         self.active_shader = None
         # Dirección de luz original
         self.directional_light = V3(0, 0, -1)
