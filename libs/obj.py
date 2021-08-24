@@ -57,14 +57,14 @@ class Texture(object):
             img.seek(headerSize)
             # Empezar a leer la imagen
             self.pixels = []  # Array de pixeles
-            for x in range(self.width):
+            for y in range(self.width):
                 self.pixels.append([])
-                for y in range(self.height):
+                for x in range(self.height):
                     # Leyendo los colores de la textura
                     b = ord(img.read(1)) / 255  # ord → convierte el caracter a ascii
                     g = ord(img.read(1)) / 255  # /255 para asegurar que el valor va de 0-1
                     r = ord(img.read(1)) / 255
-                    self.pixels[x].append(_color(r, g, b))
+                    self.pixels[y].append(_color(r, g, b))
 
     def getColor(self, tx, ty):
         if 0 <= tx < 1 and 0 <= ty < 1:

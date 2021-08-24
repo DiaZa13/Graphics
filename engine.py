@@ -8,28 +8,14 @@ width = 480
 height = 480
 
 render = Render(width, height)
-render.directional_light = (-1, 0, 1)
-# render.active_shader = flat_shader
-# # render.active_texture = Texture('textures/orange.bmp')
-# modelPosition = V3(-5, 0, -10)
-# render.loadModel('models/orange.obj',
-#                  scale=V3(0.04, 0.04, 0.04),
-#                  translate=modelPosition,
-#                  rotate=V3(0, 0, 0))
-#
-# render.active_shader = gourad_shader
-# modelPosition = V3(0, 0, -10)
-# render.loadModel('models/orange.obj',
-#                  scale=V3(0.04, 0.04, 0.04),
-#                  translate=modelPosition,
-#                  rotate=V3(0, 0, 0))
+render.directional_light = (0, 0, -1)
 
-render.active_shader = texture_interpol
-render.active_texture = Texture('textures/face.bmp')
-render.active_texture2 = Texture('textures/orange.bmp')
-modelPosition = V3(0, 0, -10)
+render.active_shader = blue_shader
+render.active_texture = Texture('textures/orange.bmp')
+# render.normal_map = Texture('normals/orange')
+modelPosition = V3(0, 0, -8)
 render.loadModel('models/orange.obj',
-                 scale=V3(0.1, 0.1, 0.1),
+                 scale=V3(0.04, 0.04, 0.04),
                  translate=modelPosition,
                  rotate=V3(0, 0, 0))
 

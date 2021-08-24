@@ -33,6 +33,8 @@ class Render(object):
         self.active_texture = None
         self.active_texture2 = None
         self.active_shader = None
+        # Mapa normal
+        self.normal_map = None
         # Dirección de luz original
         self.directional_light = V3(0, 0, -1)
 
