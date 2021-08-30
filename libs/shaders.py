@@ -228,7 +228,7 @@ def lava_shader(render, **kwargs):
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
     tA, tB, tC = kwargs['textCoords']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     b /= 255
     g /= 255
@@ -308,6 +308,7 @@ def blue_shader(render, **kwargs):
     g *= intensity
     r *= intensity
     b += 0.5
+    b /= 255
 
     return r, g, b
 
@@ -316,7 +317,7 @@ def space_shader(render, **kwargs):
     tA, tB, tC = kwargs['textCoords']
     A, B, C = kwargs['vertx']
     b, g, r = kwargs['color']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     # Asegurarme que los colores están únicamente de 0 a 1
     b /= 255
@@ -355,11 +356,9 @@ def space_shader(render, **kwargs):
     return r, g, b
 
 def checkers(render, **kwargs):
-    u, v, w = kwargs['baryCoords']
-    tA, tB, tC = kwargs['textCoords']
     A, B, C = kwargs['vertx']
     b, g, r = kwargs['color']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     # Asegurarme que los colores están únicamente de 0 a 1
     b /= 255
@@ -451,7 +450,7 @@ def pattern(render, **kwargs):
     tA, tB, tC = kwargs['textCoords']
     nA, nB, nC = kwargs['normals']
     b, g, r = kwargs['color']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     # Asegurarme que los colores están únicamente de 0 a 1
     b /= 255
@@ -510,12 +509,11 @@ def pattern(render, **kwargs):
 
 def bw_static(render, **kwargs):
     WHITE = _color(220/255, 220/255, 220/255)
-
     u, v, w = kwargs['baryCoords']
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
     tA, tB, tC = kwargs['textCoords']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     b /= 255
     g /= 255
@@ -574,7 +572,7 @@ def static(render, **kwargs):
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
     tA, tB, tC = kwargs['textCoords']
-    x, y = kwargs['coordinates']
+    x, y, z = kwargs['coordinates']
 
     b /= 255
     g /= 255
@@ -605,61 +603,61 @@ def static(render, **kwargs):
 
     if x % 25 == 0:
         if 0 <= (x * 1 / 25) % 7 < 1:
-            b *= WHITE[0] * intensity
-            g *= WHITE[1] * intensity
-            r *= WHITE[2] * intensity
+            b += WHITE[0] * intensity
+            g += WHITE[1] * intensity
+            r += WHITE[2] * intensity
         elif 1 <= (x * 1 / 25) % 7 < 2:
-            b *= YELLOW[0] * intensity
-            g *= YELLOW[1] * intensity
-            r *= YELLOW[2] * intensity
+            b += YELLOW[0] * intensity
+            g += YELLOW[1] * intensity
+            r += YELLOW[2] * intensity
         elif 2 <= (x * 1 / 25) % 7 < 3:
-            b *= CYAN[0] * intensity
-            g *= CYAN[1] * intensity
-            r *= CYAN[2] * intensity
+            b += CYAN[0] * intensity
+            g += CYAN[1] * intensity
+            r += CYAN[2] * intensity
         elif 3 <= (x * 1 / 25) % 7 < 4:
-            b *= GREEN[0] * intensity
-            g *= GREEN[1] * intensity
-            r *= GREEN[2] * intensity
+            b += GREEN[0] * intensity
+            g += GREEN[1] * intensity
+            r += GREEN[2] * intensity
         elif 4 <= (x * 1 / 25) % 7 < 5:
-            b *= MAGENTA[0] * intensity
-            g *= MAGENTA[1] * intensity
-            r *= MAGENTA[2] * intensity
+            b += MAGENTA[0] * intensity
+            g += MAGENTA[1] * intensity
+            r += MAGENTA[2] * intensity
         elif 5 <= (x * 1 / 25) % 7 < 6:
-            b *= RED[0] * intensity
-            g *= RED[1] * intensity
-            r *= RED[2] * intensity
+            b += RED[0] * intensity
+            g += RED[1] * intensity
+            r += RED[2] * intensity
         elif 6 <= (x * 1 / 25) % 7 < 7:
-            b *= BLUE[0] * intensity
-            g *= BLUE[1] * intensity
-            r *= BLUE[2] * intensity
+            b += BLUE[0] * intensity
+            g += BLUE[1] * intensity
+            r += BLUE[2] * intensity
     elif 0 <= (x * 1 / 25) % 7 < 1:
-        b *= WHITE[0] * intensity
-        g *= WHITE[1] * intensity
-        r *= WHITE[2] * intensity
+        b += WHITE[0] * intensity
+        g += WHITE[1] * intensity
+        r += WHITE[2] * intensity
     elif 1 <= (x * 1 / 25) % 7 < 2:
-        b *= YELLOW[0] * intensity
-        g *= YELLOW[1] * intensity
-        r *= YELLOW[2] * intensity
+        b += YELLOW[0] * intensity
+        g += YELLOW[1] * intensity
+        r += YELLOW[2] * intensity
     elif 2 <= (x * 1 / 25) % 7 < 3:
-        b *= CYAN[0] * intensity
-        g *= CYAN[1] * intensity
-        r *= CYAN[2] * intensity
+        b += CYAN[0] * intensity
+        g += CYAN[1] * intensity
+        r += CYAN[2] * intensity
     elif 3 <= (x * 1 / 25) % 7 < 4:
-        b *= GREEN[0] * intensity
-        g *= GREEN[1] * intensity
-        r *= GREEN[2] * intensity
+        b += GREEN[0] * intensity
+        g += GREEN[1] * intensity
+        r += GREEN[2] * intensity
     elif 4 <= (x * 1 / 25) % 7 < 5:
-        b *= MAGENTA[0] * intensity
-        g *= MAGENTA[1] * intensity
-        r *= MAGENTA[2] * intensity
+        b += MAGENTA[0] * intensity
+        g += MAGENTA[1] * intensity
+        r += MAGENTA[2] * intensity
     elif 5 <= (x * 1 / 25) % 7 < 6:
-        b *= RED[0] * intensity
-        g *= RED[1] * intensity
-        r *= RED[2] * intensity
+        b += RED[0] * intensity
+        g += RED[1] * intensity
+        r += RED[2] * intensity
     elif 6 <= (x * 1 / 25) % 7 < 7:
-        b *= BLUE[0] * intensity
-        g *= BLUE[1] * intensity
-        r *= BLUE[2] * intensity
+        b += BLUE[0] * intensity
+        g += BLUE[1] * intensity
+        r += BLUE[2] * intensity
 
     if y % 2 == 0:
         b = intensity
@@ -673,6 +671,7 @@ def static(render, **kwargs):
     return r, g, b
 
 def texture_intensity(render, **kwargs):
+
     u, v, w = kwargs['baryCoords']
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
@@ -723,7 +722,7 @@ def blinn_phong_reflection(render, **kwargs):
     tA, tB, tC = kwargs['textCoords']
     x, y, z = kwargs['coordinates']
     light_ambient_color = (1, 1, 0.2)
-    light_diffuse_color = (1, 1, 0.2)
+    light_diffuse_color = (1, 1, 1)
     light_specular_color = (1, 1, 1)
     position = [x, y, z]
 
@@ -744,7 +743,7 @@ def blinn_phong_reflection(render, **kwargs):
     # Specular light
     viewDir = zm.normalize(zm.subtract(render.camPosition, position))
     halfwayDir = zm.normalize(zm.sum(render.directional_light, viewDir))
-    specularIntensity = pow(max(zm.dot(normal, halfwayDir), 0), 32)
+    specularIntensity = pow(max(zm.dot(normal, halfwayDir), 0), 16)
     specular = zm.dot(specularIntensity, light_specular_color)
 
     intensity = [ambient[0] + diffuse[0] + specular[0], ambient[1] + diffuse[1] + specular[1], ambient[2] + diffuse[2] + specular[2]]
