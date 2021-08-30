@@ -17,6 +17,18 @@ def subtract(v1, v2):
 
     return result
 
+# Suma de 2 vectores
+def sum(v1, v2):
+    result = []
+
+    if len(v1) == len(v2):
+        for i in range(len(v1)):
+            result.append(v1[i] + v2[i])
+    else:
+        return
+
+    return result
+
 # Producto cruz entre 2 vectores
 def cross(a, b):
     result = []
@@ -36,15 +48,18 @@ def dot(a, b):
     result = []
     dot_result = 0
 
-    if len(a) == len(b):
+    if isinstance(a, (float, int)):
+        for i in range(len(b)):
+            result.append(a * b[i])
+        return result
+    elif len(a) == len(b):
         for i in range(len(a)):
             result.append(a[i] * b[i])
         for r in result:
             dot_result += r
+        return dot_result
     else:
         return
-
-    return dot_result
 
 # Normaliza un vector
 def normalize(v):

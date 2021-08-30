@@ -37,6 +37,7 @@ class Render(object):
         self.normal_map = None
         # Dirección de luz original
         self.directional_light = V3(0, 0, -1)
+        self.camPosition = V3(0, 0, 0)
 
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
@@ -218,7 +219,9 @@ class Render(object):
                                                              textCoords=textCoords,
                                                              color=color or self.draw_color,
                                                              vertx=vertx,
-                                                             normals=normals)
+                                                             normals=normals,
+                                                             coordinates=(x, y, z),
+                                                             limits=(x_min, x_max + 1))
 
                             else:
                                 # Para que utilice un color en caso de que no exista shader
@@ -332,8 +335,8 @@ class Render(object):
         camMatrix = self.objectMatriz(translate, V3(1, 1, 1), rotate)
         self.viewMatrix = camMatrix.inv()
 
-    def lookAt(self, eye, camPosition=V3(0, 0, 0)):
-        forward = zm.subtract(camPosition, eye)
+    def lookAt(self, eye):
+        forward = zm.subtract(self.camPosition, eye)
         forward = zm.normalize(forward)
 
         right = zm.cross(V3(0, 1, 0), forward)
@@ -342,9 +345,9 @@ class Render(object):
         up = zm.cross(forward, right)
         up = zm.normalize(up)
 
-        camMatrix = zm.Matrix([[right[0], up[0], forward[0], camPosition.x],
-                               [right[1], up[1], forward[1], camPosition.y],
-                               [right[2], up[2], forward[2], camPosition.z],
+        camMatrix = zm.Matrix([[right[0], up[0], forward[0], self.camPosition.x],
+                               [right[1], up[1], forward[1], self.camPosition.y],
+                               [right[2], up[2], forward[2], self.camPosition.z],
                                [0, 0, 0, 1]])
 
         self.viewMatrix = camMatrix.inv()
