@@ -21,8 +21,8 @@ render.loadModel(model,
                  translate=modelPosition,
                  rotate=V3(0, 0, 0))
 
-# Checkers shader
-render.active_shader = checkers
+# Space shader
+render.active_shader = space_shader
 modelPosition = V3(0, -2, -8)
 render.loadModel(model,
                  scale=V3(2, 2, 2),
@@ -38,9 +38,9 @@ render.loadModel(model,
                  translate=modelPosition,
                  rotate=V3(0, 0, 0))
 
-# Toon shader
-render.directional_light = (-1, 0, -1)
-render.active_shader = toon_shader
+# Pattern shader
+render.directional_light = (0, 1, -1)
+render.active_shader = pattern
 modelPosition = V3(5, -2, -8)
 render.loadModel(model,
                  scale=V3(2, 2, 2),
@@ -57,7 +57,7 @@ render.loadModel(model,
 
 # Bling phong shader
 render.camPosition = V3(5, 3, 0)
-render.directional_light = (-1, 0, 1)
+render.directional_light = (-1, 1, 1)
 render.active_shader = blinn_phong_reflection
 modelPosition = V3(0, 2, -8)
 render.loadModel(model,

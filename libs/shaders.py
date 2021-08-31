@@ -481,29 +481,25 @@ def pattern(render, **kwargs):
     elif intensity < 0:
         intensity = 0
 
-    if x % 4 == 0:
-        if ((x + 1) * 1/4) % 2 > 1:
-            b *= intensity
-            g *= intensity
-            r *= intensity
-            b += 0.5
-    elif (x * 1/4 + y * 1/4) % 2 > 1:
-        b *= intensity
-        g *= intensity
-        r *= intensity
-        b += 0.5
-
     # if x % 4 == 0:
     #     if ((x + 1) * 1/4) % 2 > 1:
     #         b *= intensity
     #         g *= intensity
     #         r *= intensity
-    #         b += 0.5
-    # elif (x * 1/4) % 2 > 1 and (y * 1/4) % 2 > 1:
+    # elif (x * 1/4 + y * 1/4) % 2 > 1:
     #     b *= intensity
     #     g *= intensity
     #     r *= intensity
-    #     b += 0.5
+
+    if x % 4 == 0:
+        if ((x + 1) * 1/4) % 2 > 1:
+            b *= intensity
+            g *= intensity
+            r *= intensity
+    elif (x * 1/4) % 2 > 1 and (y * 1/4) % 2 > 1:
+        b *= intensity
+        g *= intensity
+        r *= intensity
 
     return r, g, b
 
