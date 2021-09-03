@@ -37,7 +37,9 @@ class Sphere(object):
         if d > self.radius:
             return None
 
-        thc = (self.radius ** 2 - d ** 2) ** 5
+        # La cámara está dentro de la esfera (están en la misma posición)
+        # La esfera está detrás de la cámara
+        thc = (self.radius ** 2 - d ** 2) ** 0.5
         t0 = tca - thc
         t1 = tca + thc
 
@@ -46,8 +48,5 @@ class Sphere(object):
                 return None
             else:
                 t0 = t1
-        # La cámara está dentro de la esfera (están en la misma posición)
 
-
-        # La esfera está detrás de la cámara
         return Intersect(distance=t0)

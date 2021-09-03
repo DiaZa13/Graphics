@@ -14,7 +14,7 @@ V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 # COLORS
 BLACK = _color(0, 0, 0)
 WHITE = _color(1, 1, 1)
-
+STEP = 1
 
 # Creación de clase para hacer renderizar
 class Raytracer(object):
@@ -114,8 +114,8 @@ class Raytracer(object):
                                      vertx=(vert[0], vert[1], vert[2]))
 
     def render(self):
-        for y in range(0, self.height, 2):
-            for x in range(0, self.height, 2):  # Convertir de world coordinates a NCD
+        for y in range(0, self.height, STEP):
+            for x in range(0, self.height, STEP):  # Convertir de world coordinates a NCD
                 px = 2 * ((x + 1/2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
                 py = 2 * ((y + 1/2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
                 # Simulación del ángulo de visión, asumiendo que el near plane está a 1 unidad de la cámara
@@ -141,7 +141,7 @@ class Raytracer(object):
             return material.diffuse
 
     def sceneIntersect(self, origin, direction):
-        depth = float("inf")
+        depth = float('inf')
         material = None
         for figure in self.scene:
             intersect = figure.rayIntersect(origin, direction)
