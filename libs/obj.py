@@ -57,9 +57,9 @@ class Texture(object):
             img.seek(headerSize)
             # Empezar a leer la imagen
             self.pixels = []  # Array de pixeles
-            for y in range(self.width):
+            for y in range(self.height):
                 self.pixels.append([])
-                for x in range(self.height):
+                for x in range(self.width):
                     # Leyendo los colores de la textura
                     b = ord(img.read(1)) / 255  # ord → convierte el caracter a ascii
                     g = ord(img.read(1)) / 255  # /255 para asegurar que el valor va de 0-1
@@ -71,8 +71,10 @@ class Texture(object):
             # Porque las coordenadas de color no están normalizadas
             x = int(tx * self.width)
             y = int(ty * self.height)
-
-            return self.pixels[y][x]
+            if self.pixels[y][x]:
+                return self.pixels[y][x]
+            else:
+                return _color(0, 0, 0)
         else:
             # Si se pasan coordenas inválidas entonces se devuelve negro
             return _color(0, 0, 0)

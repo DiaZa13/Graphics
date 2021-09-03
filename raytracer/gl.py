@@ -44,8 +44,6 @@ class Raytracer(object):
         # Estructura para almacenar los pixeles de 2D para limpiar pantalla
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
 
-        self.zbuffer = [[float('inf') for y in range(self.height)] for x in range(self.width)]
-
     # Creación de la ventana
     def createWindow(self):
         self.clear()
@@ -116,8 +114,8 @@ class Raytracer(object):
                                      vertx=(vert[0], vert[1], vert[2]))
 
     def render(self):
-        for y in range(self.height):
-            for x in range(self.height):  # Convertir de world coordinates a NCD
+        for y in range(0, self.height, 2):
+            for x in range(0, self.height, 2):  # Convertir de world coordinates a NCD
                 px = 2 * ((x + 1/2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
                 py = 2 * ((y + 1/2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
                 # Simulación del ángulo de visión, asumiendo que el near plane está a 1 unidad de la cámara
@@ -136,13 +134,23 @@ class Raytracer(object):
                 self.drawPoint(x, y, self.castRay(self.camPosition, dirRay))
 
     def castRay(self, origin, direction):
-        for figure in self.scene:
-            if figure.rayIntersect(origin, direction):
-                # En caso de que haga contacto con algo, entonces retorna blanco
-                return WHITE
-            else:
-                return BLACK
+        material = self.sceneIntersect(origin, direction)
+        if material is None:
+            return self.clear_color
+        else:
+            return material.diffuse
 
+    def sceneIntersect(self, origin, direction):
+        depth = float("inf")
+        material = None
+        for figure in self.scene:
+            intersect = figure.rayIntersect(origin, direction)
+            if intersect is not None:
+                if intersect.distance < depth:
+                    material = figure.material
+                    depth = intersect.distance
+
+        return material
     '''
     Creación de bitmap
     @:arg filename: nombre del documento .bmp

@@ -388,9 +388,12 @@ class Render(object):
                 # Las normales que devuelve el modelo son antes de haber
                 # rotado el objeto. Para tener las normales correctas
                 # hay que asegurar que también están rotadas
-                normal = model.normals[face[i][2] - 1]
-                a = self.transform_direction(normal, rotationMatrix)
-                vn.append(a)
+                if model.normals:
+                    normal = model.normals[face[i][2] - 1]
+                    a = self.transform_direction(normal, rotationMatrix)
+                    vn.append(a)
+                else:
+                    vn.append(0)
 
             # Transformación de vértices por la cámara
             a = self.camTransform(vert[0])

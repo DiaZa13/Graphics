@@ -8,17 +8,17 @@ width = 960
 height = 540
 
 render = Render(width, height)
-render.active_texture = Texture('textures/face.bmp')
-model = 'models/face.obj'
+render.active_texture = Texture('textures/8.bmp')
+model = 'models/sol.obj'
 
 render.directional_light = V3(0, 0, -1)
 
 # Blue shader
-render.active_shader = blue_shader
-modelPosition = V3(5, 2, -8)
+render.active_shader = flat_shader
+modelPosition = V3(0, 0, -8)
 render.loadModel(model,
-                 scale=V3(2, 2, 2),
+                 scale=V3(1, 1, 1),
                  translate=modelPosition,
-                 rotate=V3(0, 0, 0))
+                 rotate=V3(0, 45, 0))
 
-render.end('face_shaders.bmp')
+render.end('project.bmp')
