@@ -8,6 +8,8 @@ height = 512
 raytrace = Raytracer(width, height)
 raytrace.scene.append(Sphere(V3(0, 0, -10), radius=2))
 
+
+
 raytrace.render()
 
 raytrace.end('output.bmp')

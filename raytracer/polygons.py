@@ -4,8 +4,12 @@ import libs.zutils as zu
 import numpy as np
 
 class PointLight(object):
-    def __init__(self):
-
+    # Es una luz con un punto de origen que se esparce a todas las direcciones
+    # "genera" una cantidad infinita de rayos de luz
+    def __init__(self, position, intensity, color):
+        self.position = position
+        self.intensity = intensity
+        self.color = color
 
 
 class Materials(object):
@@ -14,9 +18,11 @@ class Materials(object):
         self.diffuse = diffuse
 
 class Intersect(object):
-    def __init__(self, distance):
+    def __init__(self, distance, normal):
         # distance = distancia a la que hace contacto
         self.distance = distance
+        self.normal = normal
+
 
 class Sphere(object):
     def __init__(self, center, radius, material):
@@ -34,7 +40,7 @@ class Sphere(object):
         tca = zm.dot(L, direction)
         # Magnitud de L
         #Implementar calculo de magnitud
-        l = np.linalg.norm(L)
+        l = zm.hypotenuse(L)
 
         d = (l ** 2 - tca ** 2) ** 0.5
         # d = punto perpendicular más cercano al centro de la esfera

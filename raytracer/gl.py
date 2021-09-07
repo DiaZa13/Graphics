@@ -34,6 +34,7 @@ class Raytracer(object):
         # Agrega los objetos que se quieren renderizar en pantalla
         self.scene = []
 
+        self.pointLight = None
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
