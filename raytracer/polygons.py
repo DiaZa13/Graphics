@@ -29,7 +29,7 @@ class Sphere(object):
         tca = zm.dot(L, direction)
         # Magnitud de L
         #Implementar calculo de magnitud
-        l = np.linalg.norm(L)
+        l = zm.hypotenuse(L)
 
         d = (l ** 2 - tca ** 2) ** 0.5
         # d = punto perpendicular más cercano al centro de la esfera
