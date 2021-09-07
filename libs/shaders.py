@@ -46,8 +46,6 @@ def flat_shader(render, **kwargs):
 # Luego la iluminación calculada se interpola por cada pixel
 def gourad_shader(render, **kwargs):
     u, v, w = kwargs['baryCoords']
-    tA, tB, tC = kwargs['textCoords']
-    A, B, C = kwargs['vertx']
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
 
@@ -182,6 +180,7 @@ def texture_interpol(render, **kwargs):
     u, v, w = kwargs['baryCoords']
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
+    A, B, C = kwargs['vertx']
     tA, tB, tC = kwargs['textCoords']
 
     b /= 255
@@ -197,14 +196,18 @@ def texture_interpol(render, **kwargs):
         g *= color[1] / 255
         r *= color[2] / 255
 
-    # Interpolación de normales
-    nx = nA[0] * u + nB[0] * v + nC[0] * w
-    ny = nA[1] * u + nB[1] * v + nC[1] * w
-    nz = nA[2] * u + nB[2] * v + nC[2] * w
+    # # Interpolación de normales
+    # nx = nA[0] * u + nB[0] * v + nC[0] * w
+    # ny = nA[1] * u + nB[1] * v + nC[1] * w
+    # nz = nA[2] * u + nB[2] * v + nC[2] * w
+    #
+    # normal = (nx, ny, nz)
 
-    normal = (nx, ny, nz)
-
+    normal = zm.cross(zm.subtract(B, A), zm.subtract(C, A))
+    normal = zm.normalize(normal)  # normalización
     intensity = zm.dot(normal, [-i for i in render.directional_light])
+
+    # intensity = zm.dot(normal, [-i for i in render.directional_light])
 
     if intensity > 1:
         intensity = 1
@@ -717,6 +720,7 @@ def blinn_phong_reflection(render, **kwargs):
     nA, nB, nC = kwargs['normals']
     tA, tB, tC = kwargs['textCoords']
     x, y, z = kwargs['coordinates']
+    A, B, C = kwargs['vertx']
     light_ambient_color = (1, 1, 0.2)
     light_diffuse_color = (1, 1, 1)
     light_specular_color = (1, 1, 1)
@@ -728,11 +732,12 @@ def blinn_phong_reflection(render, **kwargs):
 
     # Diffuse light
     # Interpolación de normales
-    nx = nA[0] * u + nB[0] * v + nC[0] * w
-    ny = nA[1] * u + nB[1] * v + nC[1] * w
-    nz = nA[2] * u + nB[2] * v + nC[2] * w
+    # nx = nA[0] * u + nB[0] * v + nC[0] * w
+    # ny = nA[1] * u + nB[1] * v + nC[1] * w
+    # nz = nA[2] * u + nB[2] * v + nC[2] * w
 
-    normal = (nx, ny, nz)
+    normal = zm.cross(zm.subtract(B, A), zm.subtract(C, A))
+    normal = zm.normalize(normal)  # normalización
     diffuseIntensity = max(zm.dot(normal, [-i for i in render.directional_light]), 0)
     diffuse = zm.dot(diffuseIntensity, light_diffuse_color)
 

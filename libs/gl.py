@@ -33,6 +33,7 @@ class Render(object):
         self.active_texture = None
         self.active_texture2 = None
         self.active_shader = None
+        self.background = None
         # Mapa normal
         self.normal_map = None
         # Dirección de luz original
@@ -50,6 +51,15 @@ class Render(object):
         self.pixels = [[self.clear_color for y in range(self.height)] for x in range(self.width)]
 
         self.zbuffer = [[float('inf') for y in range(self.height)] for x in range(self.width)]
+
+    def clearBackground(self):
+        if self.background:
+            for x in range(self.vw_x, (self.vw_width + int(self.vw_x) + 1)):
+                for y in range(self.vw_y, (self.vw_height + int(self.vw_y) + 1)):
+                    tx = (x - self.vw_x) / self.vw_width
+                    ty = (y - self.vw_y) / self.vw_height
+                    color = self.background.getColor(tx, ty)
+                    self.drawPoint(x, y, color)
 
     # Creación de la ventana
     def createWindow(self):

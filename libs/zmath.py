@@ -61,6 +61,17 @@ def dot(a, b):
     else:
         return
 
+
+def hypotenuse(v):
+    r = 0
+    for a in v:
+        r += pow(a, 2)
+
+    r = pow(r, 0.5)
+
+    return r
+
+
 # Normaliza un vector
 def normalize(v):
     result = []
@@ -295,3 +306,8 @@ c = Matrix([[2, -2, 2],
 # testing = c.inv()
 # print(testing)
 # print(det)
+test = np.linalg.norm(V3(5, 8, 6))
+test1 = hypotenuse(V3(5, 8, 6))
+
+print(test)
+print(test1)

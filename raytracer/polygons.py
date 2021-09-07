@@ -3,6 +3,11 @@ import libs.zmath as zm
 import libs.zutils as zu
 import numpy as np
 
+class PointLight(object):
+    def __init__(self):
+
+
+
 class Materials(object):
     def __init__(self, diffuse=zu._color(0, 0, 0)):
         # diffuse = color de la superficie
