@@ -32,6 +32,8 @@ class Render(object):
         # Textura y shader que se estén usando en ese momento
         self.active_texture = None
         self.active_texture2 = None
+        self.glow_texture = None
+        self.spec_texture = None
         self.active_shader = None
         self.background = None
         # Mapa normal
@@ -342,8 +344,8 @@ class Render(object):
         return translateMatrix @ rotationMatrix @ scaleMatrix
 
     def CreateViewMatrix(self, translate=V3(0, 0, 0), rotate=V3(0, 0, 0)):
-        camMatrix = self.objectMatriz(translate, V3(1, 1, 1), rotate)
-        self.viewMatrix = camMatrix.inv()
+        self.camMatrix = self.objectMatriz(translate, V3(1, 1, 1), rotate)
+        self.viewMatrix = self.camMatrix.inv()
 
     def lookAt(self, eye):
         forward = zm.subtract(self.camPosition, eye)

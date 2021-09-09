@@ -308,6 +308,3 @@ c = Matrix([[2, -2, 2],
 # print(det)
 test = np.linalg.norm(V3(5, 8, 6))
 test1 = hypotenuse(V3(5, 8, 6))
-
-print(test)
-print(test1)
