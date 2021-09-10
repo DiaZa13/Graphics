@@ -60,9 +60,9 @@ render.active_texture = Texture('textures/tower1.bmp')
 render.active_texture = Texture('textures/tower2.bmp')
 model = 'models/tower.obj'
 render.active_shader = texture_interpol
-modelPosition = V3(0, -2, -15)
+modelPosition = V3(0, -3, -17)
 render.loadModel(model,
-                 scale=V3(1, 1, 1),
+                 scale=V3(1.5, 1.5, 1.5),
                  translate=modelPosition,
                  rotate=V3(-90, 0, 0))
 
@@ -78,7 +78,7 @@ render.loadModel(model,
                  rotate=V3(-95, -15, -85))
 
 
-render.directional_light = V3(1, -1, -1)
+render.directional_light = V3(0, -1, -1)
 render.active_texture = Texture('textures/moon.bmp')
 model = 'models/moon.obj'
 render.active_shader = glow_shader
