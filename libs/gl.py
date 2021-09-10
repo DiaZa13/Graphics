@@ -38,6 +38,7 @@ class Render(object):
         self.background = None
         # Mapa normal
         self.normal_map = None
+        self.normal_map2 = None
         # Dirección de luz original
         self.directional_light = V3(0, 0, -1)
         self.camPosition = V3(0, 0, 0)
@@ -207,7 +208,8 @@ class Render(object):
             self.flatTopTriangle(D, B, C, color)
             pass
 
-    def drawTriangle_bc(self, A, B, C, textCoords=(), normals=(), vertx=(), color=None):
+    def drawTriangle_bc(self, A, B, C, textCoords=(), textCoords2=(), normals=(), normals2=(), vertx=(), color=None,
+                        texture2=False):
         # Bounding Box → límites
         y_max = round(max(A.y, B.y, C.y))
         y_min = round(min(A.y, B.y, C.y))
@@ -229,11 +231,14 @@ class Render(object):
                                 r, g, b = self.active_shader(self,
                                                              baryCoords=(u, v, w),
                                                              textCoords=textCoords,
+                                                             textCoords2=textCoords2,
                                                              color=color or self.draw_color,
                                                              vertx=vertx,
                                                              normals=normals,
+                                                             normals2=normals2,
                                                              coordinates=(x, y, z),
-                                                             limits=(x_min, x_max + 1))
+                                                             limits=(x_min, x_max + 1),
+                                                             texture2=texture2)
 
                             else:
                                 # Para que utilice un color en caso de que no exista shader
@@ -389,23 +394,42 @@ class Render(object):
             vertex_count = len(face)  # Guarda la cantidad de vertices en la cara
 
             # Vértices transformados por la matriz del modelo
-            vert, vt, vn = [], [], []
+            vert, vt, vt2, vn, vn2 = [], [], [], [], []
+            texture_2 = False
             for i in range(vertex_count):
                 vertex = model.vertices[face[i][0] - 1]
                 a = self.transform(vertex, modelMatrix)
                 vert.append(a)
                 # Coordenadas de textura
-                vt.append(model.textures[face[i][1] - 1])
+                if model.textures2:
+                    if face[i][1] - 1 < len(model.textures):
+                        vt.append(model.textures[face[i][1] - 1])
+                        vt2.append([0, 0, 0])
+                    else:
+                        vt.append([0, 0, 0])
+                        vt2.append(model.textures2[face[i][1] - (1 + len(model.textures))])
+                        texture_2 = True
+                else:
+                    vt.append(model.textures[face[i][1] - 1])
+                    vt2.append([0, 0, 0])
                 # Normales
                 # Las normales que devuelve el modelo son antes de haber
                 # rotado el objeto. Para tener las normales correctas
                 # hay que asegurar que también están rotadas
                 if model.normals:
-                    normal = model.normals[face[i][2] - 1]
-                    a = self.transform_direction(normal, rotationMatrix)
-                    vn.append(a)
+                    if face[i][2] - 1 < len(model.normals):
+                        normal = model.normals[face[i][2] - 1]
+                        a = self.transform_direction(normal, rotationMatrix)
+                        vn.append(a)
+                        vn2.append([0, 0, 0])
+                    else:
+                        normal = model.normals2[face[i][2] - (1 + len(model.normals))]
+                        a = self.transform_direction(normal, rotationMatrix)
+                        vn2.append(a)
+                        vn.append([0, 0, 0])
                 else:
-                    vn.append(0)
+                    vn.append([0, 0, 0])
+                    vn2.append([0, 0, 0])
 
             # Transformación de vértices por la cámara
             a = self.camTransform(vert[0])
@@ -415,12 +439,14 @@ class Render(object):
                 d = self.camTransform(vert[3])
 
             # Dibuja los vértices
-            self.drawTriangle_bc(a, b, c, textCoords=(vt[0], vt[1], vt[2]), normals=(vn[0], vn[1], vn[2]),
-                                 vertx=(vert[0], vert[1], vert[2]))
+            self.drawTriangle_bc(a, b, c, textCoords=(vt[0], vt[1], vt[2]), textCoords2=(vt2[0], vt2[1], vt2[2]),
+                                 normals=(vn[0], vn[1], vn[2]), normals2=(vn2[0], vn2[1], vn2[2]),
+                                 vertx=(vert[0], vert[1], vert[2]), texture2=texture_2)
 
             if vertex_count == 4:
-                self.drawTriangle_bc(a, c, d, textCoords=(vt[0], vt[2], vt[3]), normals=(vn[0], vn[2], vn[3]),
-                                     vertx=(vert[0], vert[1], vert[2]))
+                self.drawTriangle_bc(a, c, d, textCoords=(vt[0], vt[2], vt[3]), textCoords2=(vt2[0], vt2[1], vt2[2]),
+                                     normals=(vn[0], vn[2], vn[3]), normals2=(vn2[0], vn2[1], vn2[2]),
+                                     vertx=(vert[0], vert[1], vert[2]), texture2=texture_2)
 
     # Rellenado de polígonos
     def filling(self, polygon, clase=None):

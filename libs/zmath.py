@@ -29,6 +29,18 @@ def sum(v1, v2):
 
     return result
 
+# Multiplicación entre 2 vectores
+def multiply(v1, v2):
+    result = []
+
+    if len(v1) == len(v2):
+        for i in range(len(v1)):
+            result.append(v1[i] * v2[i])
+    else:
+        return
+
+    return result
+
 # Producto cruz entre 2 vectores
 def cross(a, b):
     result = []
@@ -257,54 +269,3 @@ class Matrix(object):
 
         return result
 
-
-a = Matrix([[5, 3, -4, -2],
-            [8, -1, 0, -3]])
-
-b = Matrix([[1, 4, 0, 0],
-            [-5, 3, 7, 5],
-            [0, -9, 5, 0],
-            [5, 1, 4, 0]])
-
-# ([[6, 3, -2, 4],
-#             [2, 0, 0, 0],
-#             [1, 5, 2, 2],
-#             [-1, 1, 3, -1]])
-
-b = Matrix([[0, 4, -2, 4],
-            [-6, 2, -10, 0],
-            [5, 8, -5, 2],
-            [0, -2, 1, 0]])
-
-aaa = Matrix([[1, -3, 0, -2],
-            [3, -12, -2, -6],
-            [-2, 10, 2, 5],
-            [-1, 6, 1, 3]])
-
-bx = np.matrix([[0, 4, -2, 4],
-            [-6, 2, -10, 0],
-            [5, 8, -5, 2],
-            [0, -2, 1, 0]])
-
-ax = V4(5, 3, -4, 8)
-
-c = Matrix([[2, -2, 2],
-            [2, 1, 0],
-            [3, -2, 2]])
-
-# bx = Matrix([[1, 4, 0],
-#              [-5, 3, 7],
-#              [0, -9, 5],
-#              [5, 1, 4]])
-
-# result = bx @ ax
-# print(result)
-# test = b.det()
-# testing = np.linalg.det(bx)
-# det = c.det()
-# test = c.transpose()
-# testing = c.inv()
-# print(testing)
-# print(det)
-test = np.linalg.norm(V3(5, 8, 6))
-test1 = hypotenuse(V3(5, 8, 6))
