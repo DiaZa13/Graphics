@@ -3,6 +3,16 @@ import libs.zmath as zm
 from libs.zutils import V3, WHITE
 import numpy as np
 
+class DirectionalLight(object):
+    def __init__(self, direction=V3(0, -1, 0), intensity=1, color=WHITE):
+        self.direction = zm.normalize(direction)
+        self.intensity = intensity
+        self.color = color
+
+class AmbientLight(object):
+    def __init__(self, strength=0, color=WHITE):
+        self.strength = strength
+        self.color = color
 
 class PointLight(object):
     # Es una luz con un punto de origen que se esparce a todas las direcciones
@@ -60,7 +70,9 @@ class Sphere(object):
 
         # Intersect point
         # Agregar a mi librería la multiplicación de escalar por vector
-        hit = np.add(origin, t0 * np.array(direction))
+        hit = zm.sum(origin, V3(t0 * direction[0],
+                                t0 * direction[1],
+                                t0 * direction[2]))
         # Normal
         normal = zm.subtract(hit, self.center)
         # Asegurar normalizar la normal

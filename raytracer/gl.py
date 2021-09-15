@@ -29,14 +29,13 @@ class Raytracer(object):
         self.width = width
         self.height = height
         self.createWindow()
-        # Dirección de luz original
-        self.directional_light = V3(0, 0, -1)
         self.camPosition = V3(0, 0, 0)
         self.fov = 60
 
         # Agrega los objetos que se quieren renderizar en pantalla
         self.scene = []
-
+        self.ambientLight = None
+        self.directionalLight = None
         self.pointLights = []
 
     # -------- CLEAR
@@ -151,15 +150,41 @@ class Raytracer(object):
                  material.diffuse[1] / 255,
                  material.diffuse[0] / 255]
 
-        diffuse = [0, 0, 0]
-        specular = [0, 0, 0]
-        ambient = [0, 0, 0]
         intensity = [0, 0, 0]
 
         # Para calcular la luz especular se necesita: dirección de la vista y dirección de la luz reflejada
         # Vector de la vista
         view_direction = zm.subtract(self.camPosition, intersect.point)
         view_direction = zm.normalize(view_direction)
+
+        if self.ambientLight:
+            ambient = [self.ambientLight.strength * self.ambientLight.color[2] / 255,
+                       self.ambientLight.strength * self.ambientLight.color[1] / 255,
+                       self.ambientLight.strength * self.ambientLight.color[0] / 255]
+            intensity = zm.sum(intensity, ambient)
+
+        if self.directionalLight:
+            diffuse = [0, 0, 0]
+            specular = [0, 0, 0]
+            light_direction = [-i for i in self.directionalLight.direction]
+            lt = np.array(self.directionalLight.direction) * -1
+            diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * self.directionalLight.intensity
+            diffuse = [diffuseIntensity * self.directionalLight.color[2] / 255,
+                       diffuseIntensity * self.directionalLight.color[1] / 255,
+                       diffuseIntensity * self.directionalLight.color[0] / 255]
+
+            reflect = zu.reflection(intersect.normal, light_direction)
+            test = zm.dot(view_direction, reflect)
+            reflect2 = zu.reflection(intersect.normal, lt)
+            test2 = np.dot(view_direction, reflect2)
+            specularIntensity = pow(self.directionalLight.intensity * (max(0, zm.dot(view_direction, reflect))),
+                                    material.spec)
+            specular = [specularIntensity * self.directionalLight.color[2] / 255,
+                        specularIntensity * self.directionalLight.color[1] / 255,
+                        specularIntensity * self.directionalLight.color[0] / 255]
+
+            directionalIntensity = zm.sum(specular, diffuse)
+            intensity = zm.sum(intensity, directionalIntensity)
 
         for pointLight in self.pointLights:
             light_direction = zm.subtract(pointLight.position, intersect.point)

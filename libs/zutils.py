@@ -2,6 +2,9 @@
 # Interpreta bytes y los empaca como datos binarios
 from collections import namedtuple
 import struct
+
+import numpy as np
+
 from libs import zmath as zm
 
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -52,7 +55,8 @@ def baryCoords(A, B, C, P):
 def reflection(normal, directional_light):
     # R = 2 * (normal • light) * normal - light
     a = 2 * zm.dot(normal, directional_light)
-    reflect = zm.subtract(zm.multiply(a, normal), directional_light)
+    reflect = np.multiply(a, normal)
+    reflect = zm.subtract(reflect, directional_light)
     reflect = zm.normalize(reflect)
 
     return reflect
