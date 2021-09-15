@@ -2,6 +2,7 @@
 # Interpreta bytes y los empaca como datos binarios
 from collections import namedtuple
 import struct
+from libs import zmath as zm
 
 V2 = namedtuple('Point2', ['x', 'y'])
 V3 = namedtuple('Point3', ['x', 'y', 'z'])
@@ -31,6 +32,7 @@ def colors(r, g, b):
 #Colores básicos
 WHITE = colors(1, 1, 1)
 BLACK = colors(0, 0, 0)
+RED = colors(1, 0, 0)
 
 
 def baryCoords(A, B, C, P):
@@ -47,3 +49,10 @@ def baryCoords(A, B, C, P):
 
     return u, v, w
 
+def reflection(normal, directional_light):
+    # R = 2 * (normal • light) * normal - light
+    a = 2 * zm.dot(normal, directional_light)
+    reflect = zm.subtract(zm.multiply(a, normal), directional_light)
+    reflect = zm.normalize(reflect)
+
+    return reflect

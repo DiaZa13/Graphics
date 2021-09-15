@@ -1,13 +1,11 @@
 # Graphic library
 
 from collections import namedtuple
-
-import numpy as np
-
-from libs.zutils import word, dword, colors
+from libs import zutils as zu
 from libs import zmath as zm
 from rasterizador.obj import Obj
 from numpy import tan
+import numpy as np
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -15,8 +13,8 @@ V3 = namedtuple('Point3', ['x', 'y', 'z'])
 V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 
 # COLORS
-BLACK = colors(0, 0, 0)
-WHITE = colors(1, 1, 1)
+BLACK = zu.colors(0, 0, 0)
+WHITE = zu.colors(1, 1, 1)
 
 STEPS = 1
 
@@ -39,12 +37,12 @@ class Raytracer(object):
         # Agrega los objetos que se quieren renderizar en pantalla
         self.scene = []
 
-        self.pointLight = None
+        self.pointLights = []
 
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
-        self.clear_color = colors(r, g, b)
+        self.clear_color = zu.colors(r, g, b)
 
     # Limpiar pixeles de la pantalla (ponerlos todos en blanco o negro)
     def clear(self):
@@ -70,7 +68,7 @@ class Raytracer(object):
 
     # --------- DRAW
     def drawColor(self, r, g, b):
-        self.draw_color = colors(r / 255, g / 255, b / 255)
+        self.draw_color = zu.colors(r / 255, g / 255, b / 255)
 
     def drawPoint(self, x, y, color=None):
         if x < self.vw_x or x > self.vw_x + self.vw_width or y < self.vw_y or y > self.vw_y + self.vw_height:
@@ -148,33 +146,50 @@ class Raytracer(object):
             return self.clear_color
 
         # If intersect is not None
-        color = intersect.figure.material.diffuse
-        color = [color[2] / 255,
-                 color[1] / 255,
-                 color[0] / 255]
+        material = intersect.figure.material
+        color = [material.diffuse[2] / 255,
+                 material.diffuse[1] / 255,
+                 material.diffuse[0] / 255]
 
-        diffuse_color = [0, 0, 0]
+        diffuse = [0, 0, 0]
+        specular = [0, 0, 0]
+        ambient = [0, 0, 0]
+        intensity = [0, 0, 0]
 
-        if self.pointLight:
-            light_direction = zm.subtract(self.pointLight.position, intersect.point)
+        # Para calcular la luz especular se necesita: dirección de la vista y dirección de la luz reflejada
+        # Vector de la vista
+        view_direction = zm.subtract(self.camPosition, intersect.point)
+        view_direction = zm.normalize(view_direction)
+
+        for pointLight in self.pointLights:
+            light_direction = zm.subtract(pointLight.position, intersect.point)
             light_direction = zm.normalize(light_direction)
 
             # Intensidad en la superficie e intensidad en si del PL
-            intensity = max(0, zm.dot(intersect.normal, light_direction)) * self.pointLight.intensity
+            diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * pointLight.intensity
             # Color de la luz
-            diffuse_color = [intensity * self.pointLight.color[2] / 255,
-                             intensity * self.pointLight.color[1] / 255,
-                             intensity * self.pointLight.color[0] / 255]
+            diffuse = [diffuseIntensity * pointLight.color[2] / 255,
+                       diffuseIntensity * pointLight.color[1] / 255,
+                       diffuseIntensity * pointLight.color[0] / 255]
 
-        draw_color = [color[0] * diffuse_color[0],
-                      color[1] * diffuse_color[1],
-                      color[2] * diffuse_color[2]]
+            # Vector de la luz reflejada → R = 2 * (normal • light) * normal - light
+            reflect = zu.reflection(intersect.normal, light_direction)
 
-        r = min(1, draw_color[0])
-        g = min(1, draw_color[1])
-        b = min(1, draw_color[2])
+            # Specular light
+            # intensity = lightIntensity * (view_direction • reflect) ** spec
+            specularIntensity = pow(pointLight.intensity * (max(zm.dot(view_direction, reflect), 0)),
+                                    material.spec)
+            specular = [specularIntensity * pointLight.color[2] / 255,
+                        specularIntensity * pointLight.color[1] / 255,
+                        specularIntensity * pointLight.color[0] / 255]
 
-        return colors(r, g, b)
+            intensity = zm.sum(intensity, zm.sum(specular, diffuse))
+
+        r = min(1, color[0] * intensity[0])
+        g = min(1, color[1] * intensity[1])
+        b = min(1, color[2] * intensity[2])
+
+        return zu.colors(r, g, b)
 
     # intensidad = dot(normalSuperficie, directionLuz)
     def sceneIntersect(self, origin, direction):
@@ -201,23 +216,23 @@ class Raytracer(object):
             file.write(bytes('B'.encode('ascii')))
             file.write(bytes('M'.encode('ascii')))
             # 14 bytes del header + 40 InfoHeader + color table → ancho * altura * 3 (r,g,b) de cada uno
-            file.write(dword(14 + 40 + (self.width * self.height * 3)))
+            file.write(zu.dword(14 + 40 + (self.width * self.height * 3)))
             # 4 bytes reservados vacíos
-            file.write(dword(0))
-            file.write(dword(14 + 40))
+            file.write(zu.dword(0))
+            file.write(zu.dword(14 + 40))
             # InfoHeader
             # Tamaño de infoHeader
-            file.write(dword(40))
-            file.write(dword(self.width))
-            file.write(dword(self.height))
-            file.write(word(1))
-            file.write(word(24))
-            file.write(dword(0))
-            file.write(dword(self.width * self.height * 3))
-            file.write(dword(0))
-            file.write(dword(0))
-            file.write(dword(0))
-            file.write(dword(0))
+            file.write(zu.dword(40))
+            file.write(zu.dword(self.width))
+            file.write(zu.dword(self.height))
+            file.write(zu.word(1))
+            file.write(zu.word(24))
+            file.write(zu.dword(0))
+            file.write(zu.dword(self.width * self.height * 3))
+            file.write(zu.dword(0))
+            file.write(zu.dword(0))
+            file.write(zu.dword(0))
+            file.write(zu.dword(0))
 
             # Color Table
             for y in range(self.height):
