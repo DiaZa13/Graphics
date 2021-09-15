@@ -1,7 +1,11 @@
 # Funciones para uso general
 # Interpreta bytes y los empaca como datos binarios
+from collections import namedtuple
 import struct
 
+V2 = namedtuple('Point2', ['x', 'y'])
+V3 = namedtuple('Point3', ['x', 'y', 'z'])
+V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 
 # Permite asegurar que únicamente se utilize un byte
 def char(c):
@@ -19,10 +23,15 @@ def dword(d):
     return struct.pack('=l', d)
 
 
-def _color(r, g, b):
+def colors(r, g, b):
     # Comúnmente la tarjeta de video en colores acepta valor de 0 a 1
     # Y para convertirlo en byte se multiplica por 255
     return bytes([int(b * 255), int(g * 255), int(r * 255)])
+
+#Colores básicos
+WHITE = colors(1, 1, 1)
+BLACK = colors(0, 0, 0)
+
 
 def baryCoords(A, B, C, P):
     # u es para A, v es para B, w es para C
@@ -38,23 +47,3 @@ def baryCoords(A, B, C, P):
 
     return u, v, w
 
-
-# # Por si se usan los vértices puros sin transformación
-# vert0 = model.vertices[face[0][0] - 1]
-# vert1 = model.vertices[face[1][0] - 1]
-# vert2 = model.vertices[face[2][0] - 1]
-#
-# # Coordenadas de textura
-# vt0 = model.textures[face[0][1] - 1]
-# vt1 = model.textures[face[1][1] - 1]
-# vt2 = model.textures[face[2][1] - 1]
-#
-# # Transformación de vértices por la matriz del modelo
-# _a = self.transform(vert0, modelMatrix)
-# _b = self.transform(vert1, modelMatrix)
-# _c = self.transform(vert2, modelMatrix)
-# # En caso de que tenga 4 vertices
-# if vertex_count == 4:
-#     vert3 = model.vertices[face[3][0] - 1]
-#     vt3 = model.textures[face[3][1] - 1]
-#     _d = self.transform(vert3, modelMatrix)

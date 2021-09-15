@@ -1,5 +1,5 @@
 from libs import zmath as zm
-from libs.zutils import _color
+from libs.zutils import colors
 from numpy import cos, sin
 
 
@@ -609,7 +609,7 @@ def pattern(render, **kwargs):
 
 
 def bw_static(render, **kwargs):
-    WHITE = _color(220 / 255, 220 / 255, 220 / 255)
+    WHITE = colors(220 / 255, 220 / 255, 220 / 255)
     u, v, w = kwargs['baryCoords']
     b, g, r = kwargs['color']
     nA, nB, nC = kwargs['normals']
@@ -660,13 +660,13 @@ def bw_static(render, **kwargs):
 
 
 def static(render, **kwargs):
-    WHITE = _color(220 / 255, 220 / 255, 220 / 255)
-    YELLOW = _color(238 / 255, 207 / 255, 7 / 255)
-    CYAN = _color(37 / 255, 215 / 255, 237 / 255)
-    GREEN = _color(4 / 255, 155 / 255, 32 / 255)
-    MAGENTA = _color(235 / 255, 79 / 255, 190 / 255)
-    RED = _color(164 / 255, 10 / 255, 10 / 255)
-    BLUE = _color(14 / 255, 41 / 255, 191 / 255)
+    WHITE = colors(220 / 255, 220 / 255, 220 / 255)
+    YELLOW = colors(238 / 255, 207 / 255, 7 / 255)
+    CYAN = colors(37 / 255, 215 / 255, 237 / 255)
+    GREEN = colors(4 / 255, 155 / 255, 32 / 255)
+    MAGENTA = colors(235 / 255, 79 / 255, 190 / 255)
+    RED = colors(164 / 255, 10 / 255, 10 / 255)
+    BLUE = colors(14 / 255, 41 / 255, 191 / 255)
 
     u, v, w = kwargs['baryCoords']
     b, g, r = kwargs['color']

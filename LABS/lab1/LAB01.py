@@ -1,4 +1,4 @@
-from libs import gl
+from rasterizador import gl
 
 # Variables
 width = 960

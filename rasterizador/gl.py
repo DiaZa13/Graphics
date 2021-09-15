@@ -1,10 +1,9 @@
 # Graphic library
 from collections import namedtuple
-from libs.zutils import char, word, dword, _color, baryCoords
-from libs.obj import Obj, Texture
+from libs.zutils import word, dword, colors, baryCoords
+from rasterizador.obj import Obj
 from libs import zmath as zm
 
-import numpy as np
 from numpy import cos, sin, tan
 
 # Creación de un tipo de variable para dibujar una línea
@@ -13,8 +12,8 @@ V3 = namedtuple('Point3', ['x', 'y', 'z'])
 V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 
 # COLORS
-BLACK = _color(0, 0, 0)
-WHITE = _color(1, 1, 1)
+BLACK = colors(0, 0, 0)
+WHITE = colors(1, 1, 1)
 
 
 # Creación de clase para hacer renderizar
@@ -46,7 +45,7 @@ class Render(object):
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
-        self.clear_color = _color(r, g, b)
+        self.clear_color = colors(r, g, b)
 
     # Limpiar pixeles de la pantalla (ponerlos todos en blanco o negro)
     def clear(self):
@@ -91,7 +90,7 @@ class Render(object):
 
     # --------- DRAW
     def drawColor(self, r, g, b):
-        self.draw_color = _color(r / 255, g / 255, b / 255)
+        self.draw_color = colors(r / 255, g / 255, b / 255)
 
     # Dibujar un punto con coordenadas normalizadas
     def drawPoint_NDC(self, x, y, color=None):
@@ -247,7 +246,7 @@ class Render(object):
                                 g /= 255
                                 r /= 255
 
-                            self.drawPoint(x, y, _color(r, g, b))
+                            self.drawPoint(x, y, colors(r, g, b))
                             # Modifico el valor del zbuffer
                             self.zbuffer[x][y] = z
 
@@ -490,7 +489,7 @@ class Render(object):
             elif clase == 't':
                 if 144 <= y < 177:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
-                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y), _color(0, 0, 0))
+                    self.drawLine(V2(drawX[(len(drawX) - 2)], y), V2(drawX[len(drawX) - 1], y), colors(0, 0, 0))
                 elif 177 <= y < 180:
                     self.drawLine(V2(drawX[(len(drawX) - 4)], y), V2(drawX[len(drawX) - 3], y))
 

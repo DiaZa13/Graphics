@@ -1,10 +1,13 @@
 # Graphic library
-from collections import namedtuple
-from libs.zutils import char, word, dword, _color, baryCoords
-from libs.obj import Obj, Texture
-from numpy import tan
-from libs import zmath as zm
 
+from collections import namedtuple
+
+import numpy as np
+
+from libs.zutils import word, dword, colors
+from libs import zmath as zm
+from rasterizador.obj import Obj
+from numpy import tan
 
 # Creación de un tipo de variable para dibujar una línea
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -12,8 +15,10 @@ V3 = namedtuple('Point3', ['x', 'y', 'z'])
 V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 
 # COLORS
-BLACK = _color(0, 0, 0)
-WHITE = _color(1, 1, 1)
+BLACK = colors(0, 0, 0)
+WHITE = colors(1, 1, 1)
+
+STEPS = 1
 
 
 # Creación de clase para hacer renderizar
@@ -35,10 +40,11 @@ class Raytracer(object):
         self.scene = []
 
         self.pointLight = None
+
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
-        self.clear_color = _color(r, g, b)
+        self.clear_color = colors(r, g, b)
 
     # Limpiar pixeles de la pantalla (ponerlos todos en blanco o negro)
     def clear(self):
@@ -64,7 +70,7 @@ class Raytracer(object):
 
     # --------- DRAW
     def drawColor(self, r, g, b):
-        self.draw_color = _color(r / 255, g / 255, b / 255)
+        self.draw_color = colors(r / 255, g / 255, b / 255)
 
     def drawPoint(self, x, y, color=None):
         if x < self.vw_x or x > self.vw_x + self.vw_width or y < self.vw_y or y > self.vw_y + self.vw_height:
@@ -115,10 +121,11 @@ class Raytracer(object):
                                      vertx=(vert[0], vert[1], vert[2]))
 
     def render(self):
-        for y in range(0, self.height, 2):
-            for x in range(0, self.height, 2):  # Convertir de world coordinates a NCD
-                px = 2 * ((x + 1/2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
-                py = 2 * ((y + 1/2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
+        for y in range(0, self.height, STEPS):
+            for x in range(0, self.height, STEPS):  # Convertir de world coordinates a NCD
+                px = 2 * ((x + 1 / 2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
+                py = 2 * ((
+                                  y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
                 # Simulación del ángulo de visión, asumiendo que el near plane está a 1 unidad de la cámara
                 aRatio = self.width / self.height
                 t = tan(zm.deg2rad(self.fov) / 2)
@@ -135,27 +142,59 @@ class Raytracer(object):
                 self.drawPoint(x, y, self.castRay(self.camPosition, dirRay))
 
     def castRay(self, origin, direction):
-        material = self.sceneIntersect(origin, direction)
-        if material is None:
-            return self.clear_color
-        else:
-            return material.diffuse
+        intersect = self.sceneIntersect(origin, direction)
 
+        if intersect is None:
+            return self.clear_color
+
+        # If intersect is not None
+        color = intersect.figure.material.diffuse
+        color = [color[2] / 255,
+                 color[1] / 255,
+                 color[0] / 255]
+
+        diffuse_color = [0, 0, 0]
+
+        if self.pointLight:
+            light_direction = zm.subtract(self.pointLight.position, intersect.point)
+            light_direction = zm.normalize(light_direction)
+
+            # Intensidad en la superficie e intensidad en si del PL
+            intensity = max(0, zm.dot(intersect.normal, light_direction)) * self.pointLight.intensity
+            # Color de la luz
+            diffuse_color = [intensity * self.pointLight.color[2] / 255,
+                             intensity * self.pointLight.color[1] / 255,
+                             intensity * self.pointLight.color[0] / 255]
+
+        draw_color = [color[0] * diffuse_color[0],
+                      color[1] * diffuse_color[1],
+                      color[2] * diffuse_color[2]]
+
+        r = min(1, draw_color[0])
+        g = min(1, draw_color[1])
+        b = min(1, draw_color[2])
+
+        return colors(r, g, b)
+
+    # intensidad = dot(normalSuperficie, directionLuz)
     def sceneIntersect(self, origin, direction):
         depth = float("inf")
-        material = None
+        intersect = None
         for figure in self.scene:
-            intersect = figure.rayIntersect(origin, direction)
-            if intersect is not None:
-                if intersect.distance < depth:
-                    material = figure.material
-                    depth = intersect.distance
+            hit = figure.rayIntersect(origin, direction)
+            if hit is not None:
+                # z-buffer
+                if hit.distance < depth:
+                    intersect = hit
+                    depth = hit.distance
 
-        return material
+        return intersect
+
     '''
     Creación de bitmap
     @:arg filename: nombre del documento .bmp
     '''
+
     def end(self, filename):
         with open(filename, 'wb') as file:
             # Header

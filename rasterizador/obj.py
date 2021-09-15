@@ -1,6 +1,6 @@
 # Cargar archivo OBJ
 import struct
-from libs.zutils import _color
+from libs.zutils import colors
 
 def color(r, g, b):
     # Comúnmente la tarjeta de video en colores acepta valor de 0 a 1
@@ -75,7 +75,7 @@ class Texture(object):
                     b = ord(img.read(1)) / 255  # ord → convierte el caracter a ascii
                     g = ord(img.read(1)) / 255  # /255 para asegurar que el valor va de 0-1
                     r = ord(img.read(1)) / 255
-                    self.pixels[y].append(_color(r, g, b))
+                    self.pixels[y].append(colors(r, g, b))
 
     def getColor(self, tx, ty):
         if 0 <= tx < 1 and 0 <= ty < 1:
@@ -85,8 +85,8 @@ class Texture(object):
             if self.pixels[y][x]:
                 return self.pixels[y][x]
             else:
-                return _color(0, 0, 0)
+                return colors(0, 0, 0)
         else:
             # Si se pasan coordenas inválidas entonces se devuelve negro
-            return _color(0, 0, 0)
+            return colors(0, 0, 0)
 

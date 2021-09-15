@@ -1,27 +1,25 @@
 # Figuras para las intersecciones
 import libs.zmath as zm
-import libs.zutils as zu
+from libs.zutils import V3, WHITE
 import numpy as np
+
 
 class PointLight(object):
     # Es una luz con un punto de origen que se esparce a todas las direcciones
-    # "genera" una cantidad infinita de rayos de luz
-    def __init__(self, position, intensity, color):
+    # "genera" una cantidad infinita de rayos de luz en todas las direcciones
+    def __init__(self, position=V3(0, 0, 0), intensity=1, color=WHITE):
         self.position = position
         self.intensity = intensity
         self.color = color
 
 
-class Materials(object):
-    def __init__(self, diffuse=zu._color(0, 0, 0)):
-        # diffuse = color de la superficie
-        self.diffuse = diffuse
-
 class Intersect(object):
-    def __init__(self, distance, normal):
+    def __init__(self, distance, point, normal, figure):
         # distance = distancia a la que hace contacto
         self.distance = distance
+        self.point = point
         self.normal = normal
+        self.figure = figure
 
 
 class Sphere(object):
@@ -39,7 +37,7 @@ class Sphere(object):
         # Tca = distancia perpendicular del origen al centro
         tca = zm.dot(L, direction)
         # Magnitud de L
-        #Implementar calculo de magnitud
+        # Implementar calculo de magnitud
         l = zm.hypotenuse(L)
 
         d = (l ** 2 - tca ** 2) ** 0.5
@@ -48,17 +46,24 @@ class Sphere(object):
         if d > self.radius:
             return None
 
-        thc = (self.radius ** 2 - d ** 2) ** 5
+        thc = (self.radius ** 2 - d ** 2) ** 0.5
         t0 = tca - thc
         t1 = tca + thc
 
+        # La cámara está dentro de la esfera (están en la misma posición)
+        # La esfera está detrás de la cámara
         if t0 < 0:
             if t1 < 0:
                 return None
             else:
                 t0 = t1
-        # La cámara está dentro de la esfera (están en la misma posición)
 
+        # Intersect point
+        # Agregar a mi librería la multiplicación de escalar por vector
+        hit = np.add(origin, t0 * np.array(direction))
+        # Normal
+        normal = zm.subtract(hit, self.center)
+        # Asegurar normalizar la normal
+        normal = zm.normalize(normal)
 
-        # La esfera está detrás de la cámara
-        return Intersect(distance=t0)
+        return Intersect(distance=t0, point=hit, normal=normal, figure=self)
