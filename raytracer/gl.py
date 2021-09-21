@@ -164,31 +164,34 @@ class Raytracer(object):
             intensity = zm.sum(intensity, ambient)
 
         if self.directionalLight:
-            diffuse = [0, 0, 0]
-            specular = [0, 0, 0]
             light_direction = [-i for i in self.directionalLight.direction]
-            lt = np.array(self.directionalLight.direction) * -1
             diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * self.directionalLight.intensity
             diffuse = [diffuseIntensity * self.directionalLight.color[2] / 255,
                        diffuseIntensity * self.directionalLight.color[1] / 255,
                        diffuseIntensity * self.directionalLight.color[0] / 255]
 
+            shadow_intensity = 0
+
             reflect = zu.reflection(intersect.normal, light_direction)
-            test = zm.dot(view_direction, reflect)
-            reflect2 = zu.reflection(intersect.normal, lt)
-            test2 = np.dot(view_direction, reflect2)
             specularIntensity = pow(self.directionalLight.intensity * (max(0, zm.dot(view_direction, reflect))),
                                     material.spec)
             specular = [specularIntensity * self.directionalLight.color[2] / 255,
                         specularIntensity * self.directionalLight.color[1] / 255,
                         specularIntensity * self.directionalLight.color[0] / 255]
 
-            directionalIntensity = zm.sum(specular, diffuse)
+            # shadow
+            shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
+            if shadow_intersect:
+                shadow_intensity = 1
+
+            directionalIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
             intensity = zm.sum(intensity, directionalIntensity)
 
         for pointLight in self.pointLights:
             light_direction = zm.subtract(pointLight.position, intersect.point)
             light_direction = zm.normalize(light_direction)
+
+            shadow_intensity = 0
 
             # Intensidad en la superficie e intensidad en si del PL
             diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * pointLight.intensity
@@ -208,7 +211,15 @@ class Raytracer(object):
                         specularIntensity * pointLight.color[1] / 255,
                         specularIntensity * pointLight.color[0] / 255]
 
-            intensity = zm.sum(intensity, zm.sum(specular, diffuse))
+            # Shadow
+            shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
+            light_distance = zm.subtract(pointLight.position, intersect.point)
+            light_distance = zm.hypotenuse(light_distance)
+            if shadow_intersect and shadow_intersect.distance < light_distance:
+                shadow_intensity = 1
+
+            pointLightIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
+            intensity = zm.sum(intensity, pointLightIntensity)
 
         r = min(1, color[0] * intensity[0])
         g = min(1, color[1] * intensity[1])
@@ -217,16 +228,17 @@ class Raytracer(object):
         return zu.colors(r, g, b)
 
     # intensidad = dot(normalSuperficie, directionLuz)
-    def sceneIntersect(self, origin, direction):
+    def sceneIntersect(self, origin, direction, origin_object=None):
         depth = float("inf")
         intersect = None
         for figure in self.scene:
-            hit = figure.rayIntersect(origin, direction)
-            if hit is not None:
-                # z-buffer
-                if hit.distance < depth:
-                    intersect = hit
-                    depth = hit.distance
+            if figure is not origin_object:
+                hit = figure.rayIntersect(origin, direction)
+                if hit is not None:
+                    # z-buffer
+                    if hit.distance < depth:
+                        intersect = hit
+                        depth = hit.distance
 
         return intersect
 

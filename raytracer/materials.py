@@ -1,8 +1,11 @@
 import libs.zutils as zu
 
+OPAQUE = 0
+REFLECTIVE = 1
+TRANSPARENT = 2
 
 class Materials(object):
-    def __init__(self, diffuse=zu.WHITE, spec=1):
+    def __init__(self, diffuse=zu.WHITE, spec=1, material_type=OPAQUE):
         # diffuse = color de la superficie
         self.diffuse = diffuse
         self.spec = spec
