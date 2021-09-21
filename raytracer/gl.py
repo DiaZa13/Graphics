@@ -180,8 +180,8 @@ class Raytracer(object):
                 shadow_intensity = 0
 
                 reflect = zu.reflection(intersect.normal, light_direction)
-                specularIntensity = pow(self.directionalLight.intensity * (max(0, zm.dot(view_direction, reflect))),
-                                        material.spec)
+                specularIntensity = self.directionalLight.intensity * pow((max(0, zm.dot(view_direction, reflect))),
+                                                                          material.spec)
                 specular = [specularIntensity * self.directionalLight.color[2] / 255,
                             specularIntensity * self.directionalLight.color[1] / 255,
                             specularIntensity * self.directionalLight.color[0] / 255]
@@ -212,8 +212,8 @@ class Raytracer(object):
 
                 # Specular light
                 # intensity = lightIntensity * (view_direction • reflect) ** spec
-                specularIntensity = pow(pointLight.intensity * (max(zm.dot(view_direction, reflect), 0)),
-                                        material.spec)
+                specularIntensity = pointLight.intensity * pow((max(zm.dot(view_direction, reflect), 0)),
+                                                               material.spec)
                 specular = [specularIntensity * pointLight.color[2] / 255,
                             specularIntensity * pointLight.color[1] / 255,
                             specularIntensity * pointLight.color[0] / 255]
