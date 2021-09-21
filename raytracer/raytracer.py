@@ -1,7 +1,7 @@
 from gl import Raytracer, V3
 from polygons import Sphere, PointLight, AmbientLight, DirectionalLight
 from materials import SKY, COPPER, GRASS, STONE, MIRROR
-from libs import zutils as zu
+from rasterizador.obj import EnvMap
 
 width = 512
 height = 512

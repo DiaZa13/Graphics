@@ -39,6 +39,8 @@ class Raytracer(object):
         self.directionalLight = None
         self.pointLights = []
 
+        self.envmap = None
+
     # -------- CLEAR
     # Define el color con el que se va a limpiar la pantalla
     def clearColor(self, r, g, b):
@@ -143,7 +145,10 @@ class Raytracer(object):
         intersect = self.sceneIntersect(origin, direction, origin_object)
 
         if intersect is None or recursion >= MAX_RECURSION_DEPTH:
-            return self.clear_color
+            if self.envmap:
+                return self.envmap.getColor(direction)
+            else:
+                return self.clear_color
 
         # If intersect is not None
         material = intersect.figure.material

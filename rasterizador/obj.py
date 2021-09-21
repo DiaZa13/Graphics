@@ -1,6 +1,8 @@
 # Cargar archivo OBJ
 import struct
 from libs.zutils import colors
+from libs.zmath import normalize, pi
+from numpy import arccos,  arctan2
 
 def color(r, g, b):
     # Comúnmente la tarjeta de video en colores acepta valor de 0 a 1
@@ -90,3 +92,38 @@ class Texture(object):
             # Si se pasan coordenas inválidas entonces se devuelve negro
             return colors(0, 0, 0)
 
+# Enviroment map
+class EnvMap(object):
+    def __init__(self, filename):
+        self.file = filename
+        self.read()
+
+    def read(self):
+        # rb → abrir el archivo en modo lectura binario
+        with open(self.file, 'rb') as img:
+            img.seek(10)  # Se salta 10bytes
+            headerSize = struct.unpack('=l', img.read(4))[0]  # Para que lea el size del header
+
+            img.seek(14 + 4)  # Se mueve a la posición en la que esta el ancho y el alto
+            self.width = struct.unpack('=l', img.read(4))[0]  # Lee los 4bytes correspondientes del ancho
+            self.height = struct.unpack('=l', img.read(4))[0]  # Lee los 4bytes correspondientes de la altura
+
+            # Se necesitaba para empezar a leer la tabla de colores de la textura
+            img.seek(headerSize)
+            # Empezar a leer la imagen
+            self.pixels = []  # Array de pixeles
+            for y in range(self.height):
+                self.pixels.append([])
+                for x in range(self.width):
+                    # Leyendo los colores de la textura
+                    b = ord(img.read(1)) / 255  # ord → convierte el caracter a ascii
+                    g = ord(img.read(1)) / 255  # /255 para asegurar que el valor va de 0-1
+                    r = ord(img.read(1)) / 255
+                    self.pixels[y].append(colors(r, g, b))
+
+    def getColor(self, direction):
+        direction = normalize(direction)
+        x = int(arctan2(direction[2], direction[0]) / (2 * pi()) * self.width)
+        y = int(arccos(-direction[1]) / (2 * pi()) * self.height)
+        # TODO revisar con el código base
+        return x, y
