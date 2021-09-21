@@ -16,6 +16,7 @@ V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 BLACK = zu.colors(0, 0, 0)
 WHITE = zu.colors(1, 1, 1)
 
+MAX_RECURSION_DEPTH = 3
 STEPS = 1
 
 
@@ -138,10 +139,10 @@ class Raytracer(object):
                 # El origen del rayo es la posición de la cámara
                 self.drawPoint(x, y, self.castRay(self.camPosition, dirRay))
 
-    def castRay(self, origin, direction):
-        intersect = self.sceneIntersect(origin, direction)
+    def castRay(self, origin, direction, origin_object=None, recursion=0):
+        intersect = self.sceneIntersect(origin, direction, origin_object)
 
-        if intersect is None:
+        if intersect is None or recursion >= MAX_RECURSION_DEPTH:
             return self.clear_color
 
         # If intersect is not None
@@ -157,69 +158,77 @@ class Raytracer(object):
         view_direction = zm.subtract(self.camPosition, intersect.point)
         view_direction = zm.normalize(view_direction)
 
-        if self.ambientLight:
-            ambient = [self.ambientLight.strength * self.ambientLight.color[2] / 255,
-                       self.ambientLight.strength * self.ambientLight.color[1] / 255,
-                       self.ambientLight.strength * self.ambientLight.color[0] / 255]
-            intensity = zm.sum(intensity, ambient)
+        if material.material_type == 0:
+            if self.ambientLight:
+                ambient = [self.ambientLight.strength * self.ambientLight.color[2] / 255,
+                           self.ambientLight.strength * self.ambientLight.color[1] / 255,
+                           self.ambientLight.strength * self.ambientLight.color[0] / 255]
+                intensity = zm.sum(intensity, ambient)
 
-        if self.directionalLight:
-            light_direction = [-i for i in self.directionalLight.direction]
-            diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * self.directionalLight.intensity
-            diffuse = [diffuseIntensity * self.directionalLight.color[2] / 255,
-                       diffuseIntensity * self.directionalLight.color[1] / 255,
-                       diffuseIntensity * self.directionalLight.color[0] / 255]
+            if self.directionalLight:
+                light_direction = [-i for i in self.directionalLight.direction]
+                diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * self.directionalLight.intensity
+                diffuse = [diffuseIntensity * self.directionalLight.color[2] / 255,
+                           diffuseIntensity * self.directionalLight.color[1] / 255,
+                           diffuseIntensity * self.directionalLight.color[0] / 255]
 
-            shadow_intensity = 0
+                shadow_intensity = 0
 
-            reflect = zu.reflection(intersect.normal, light_direction)
-            specularIntensity = pow(self.directionalLight.intensity * (max(0, zm.dot(view_direction, reflect))),
-                                    material.spec)
-            specular = [specularIntensity * self.directionalLight.color[2] / 255,
-                        specularIntensity * self.directionalLight.color[1] / 255,
-                        specularIntensity * self.directionalLight.color[0] / 255]
+                reflect = zu.reflection(intersect.normal, light_direction)
+                specularIntensity = pow(self.directionalLight.intensity * (max(0, zm.dot(view_direction, reflect))),
+                                        material.spec)
+                specular = [specularIntensity * self.directionalLight.color[2] / 255,
+                            specularIntensity * self.directionalLight.color[1] / 255,
+                            specularIntensity * self.directionalLight.color[0] / 255]
 
-            # shadow
-            shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
-            if shadow_intersect:
-                shadow_intensity = 1
+                # shadow
+                shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
+                if shadow_intersect:
+                    shadow_intensity = 1
 
-            directionalIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
-            intensity = zm.sum(intensity, directionalIntensity)
+                directionalIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
+                intensity = zm.sum(intensity, directionalIntensity)
 
-        for pointLight in self.pointLights:
-            light_direction = zm.subtract(pointLight.position, intersect.point)
-            light_direction = zm.normalize(light_direction)
+            for pointLight in self.pointLights:
+                light_direction = zm.subtract(pointLight.position, intersect.point)
+                light_direction = zm.normalize(light_direction)
 
-            shadow_intensity = 0
+                shadow_intensity = 0
 
-            # Intensidad en la superficie e intensidad en si del PL
-            diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * pointLight.intensity
-            # Color de la luz
-            diffuse = [diffuseIntensity * pointLight.color[2] / 255,
-                       diffuseIntensity * pointLight.color[1] / 255,
-                       diffuseIntensity * pointLight.color[0] / 255]
+                # Intensidad en la superficie e intensidad en si del PL
+                diffuseIntensity = max(0, zm.dot(intersect.normal, light_direction)) * pointLight.intensity
+                # Color de la luz
+                diffuse = [diffuseIntensity * pointLight.color[2] / 255,
+                           diffuseIntensity * pointLight.color[1] / 255,
+                           diffuseIntensity * pointLight.color[0] / 255]
 
-            # Vector de la luz reflejada → R = 2 * (normal • light) * normal - light
-            reflect = zu.reflection(intersect.normal, light_direction)
+                # Vector de la luz reflejada → R = 2 * (normal • light) * normal - light
+                reflect = zu.reflection(intersect.normal, light_direction)
 
-            # Specular light
-            # intensity = lightIntensity * (view_direction • reflect) ** spec
-            specularIntensity = pow(pointLight.intensity * (max(zm.dot(view_direction, reflect), 0)),
-                                    material.spec)
-            specular = [specularIntensity * pointLight.color[2] / 255,
-                        specularIntensity * pointLight.color[1] / 255,
-                        specularIntensity * pointLight.color[0] / 255]
+                # Specular light
+                # intensity = lightIntensity * (view_direction • reflect) ** spec
+                specularIntensity = pow(pointLight.intensity * (max(zm.dot(view_direction, reflect), 0)),
+                                        material.spec)
+                specular = [specularIntensity * pointLight.color[2] / 255,
+                            specularIntensity * pointLight.color[1] / 255,
+                            specularIntensity * pointLight.color[0] / 255]
 
-            # Shadow
-            shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
-            light_distance = zm.subtract(pointLight.position, intersect.point)
-            light_distance = zm.hypotenuse(light_distance)
-            if shadow_intersect and shadow_intersect.distance < light_distance:
-                shadow_intensity = 1
+                # Shadow
+                shadow_intersect = self.sceneIntersect(intersect.point, light_direction, intersect.figure)
+                light_distance = zm.subtract(pointLight.position, intersect.point)
+                light_distance = zm.hypotenuse(light_distance)
+                if shadow_intersect and shadow_intersect.distance < light_distance:
+                    shadow_intensity = 1
 
-            pointLightIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
-            intensity = zm.sum(intensity, pointLightIntensity)
+                pointLightIntensity = zm.multiply((1 - shadow_intensity), zm.sum(specular, diffuse))
+                intensity = zm.sum(intensity, pointLightIntensity)
+
+        elif material.material_type == 1:
+            reflect = zu.reflection(intersect.normal, [-i for i in direction])
+            reflectColor = self.castRay(intersect.point, reflect, intersect.figure, recursion + 1)
+            intensity = [reflectColor[2] / 255,
+                         reflectColor[1] / 255,
+                         reflectColor[0] / 255]
 
         r = min(1, color[0] * intensity[0])
         g = min(1, color[1] * intensity[1])
