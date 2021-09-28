@@ -3,6 +3,7 @@
 from collections import namedtuple
 import struct
 from libs import zmath as zm
+import numpy as np
 
 V2 = namedtuple('Point2', ['x', 'y'])
 V3 = namedtuple('Point3', ['x', 'y', 'z'])
@@ -57,10 +58,11 @@ def reflection(normal, directional_light):
 
     return reflect
 
-def refractor(normal, directional_light, ior):
+def refractor(normal, direction, ior):
     # Snell's law
     # ángulo crítico
-    cosi = max(-1, min(1, zm.dot(directional_light, normal)))
+    cosi = max(-1, min(1, zm.dot(direction, normal)))
+    cosi2 = max(-1, min(1, np.dot(direction, normal)))
     etai = 1
     etat = ior
 
@@ -71,14 +73,24 @@ def refractor(normal, directional_light, ior):
         etai, etat = etat, etai
         normal = [-i for i in normal]
 
+    if cosi2 < 0:
+        cosi2 = -cosi2
+    else:
+        etai, etat = etat, etai
+        normal = np.array(normal) * -1
+
     # Determina si existe reflexión interna
     eta = etai / etat
     k = 1 - eta * eta * (1 - (cosi * cosi))
+    k2 = 1 - eta * eta * (1 - (cosi2 * cosi2))
+
     # Reflexión total
     if k < 0:
         return None
 
-    R = zm.multiply(eta, zm.sum(directional_light, zm.multiply((eta * cosi**0.5), normal)))
+    a = zm.multiply(eta, direction)
+    b = zm.multiply((eta * cosi - k**0.5), normal)
+    R = zm.sum(a, b)
     return zm.normalize(R)
 
 def fresnel(normal, directional_light, ior):

@@ -16,7 +16,7 @@ raytracer.directionalLight = DirectionalLight(direction=V3(1, -1, -2), intensity
 raytracer.pointLights.append(PointLight(position=V3(0, 2, 0), intensity=0.5))
 # raytracer.pointLights.append(PointLight(position=V3(5, -7, 0)))
 
-raytracer.scene.append(AABB(V3(-3, -3, -8), V3(3, 3, 3), STONE))
+raytracer.scene.append(Sphere(V3(0, 0, -8), 1.5, GLASS))
 
 raytracer.render()
 raytracer.end('output.bmp')

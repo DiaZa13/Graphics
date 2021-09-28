@@ -180,14 +180,15 @@ class Raytracer(object):
             # Qué tanta refracción y reflexión hay
             outside = zm.dot(direction, intersect.normal) < 0
             # Para que no haga contacto con la superficie de sí mismo, no se, se revisa a cierta distancia para que no toque la superficie
-            bias = 0.001 * intersect.normal
+            bias = zm.multiply(0.001, intersect.normal)
             refract = zu.refractor(intersect.normal, direction, material.ior)
-            # TODO que subtract reste vector - decimal
-            refract_origin = zm.subtract(intersect.point, bias) if outside else zm.sum(bias, intersect)
+
+            refract_origin = zm.subtract(intersect.point, bias) if outside else zm.sum(bias, intersect.point)
             refractColor = self.castRay(refract_origin, refract, None, recursion + 1)
             intensity = [refractColor[2] / 255,
                          refractColor[1] / 255,
                          refractColor[0] / 255]
+
 
         r = min(1, color[0] * intensity[0])
         g = min(1, color[1] * intensity[1])
