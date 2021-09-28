@@ -9,6 +9,9 @@ V4 = namedtuple('Point4', ['x', 'y', 'z', 'w'])
 def subtract(v1, v2):
     result = []
 
+    # if isinstance(v2, (float, int)):
+    #     for i in range(len(v1)):
+    #         result.append(v1[i] - v1)
     if len(v1) == len(v2):
         for i in range(len(v1)):
             result.append(v1[i] - v2[i])
@@ -21,7 +24,13 @@ def subtract(v1, v2):
 def sum(v1, v2):
     result = []
 
-    if len(v1) == len(v2):
+    if isinstance(v1, (float, int)):
+        for i in range(len(v2)):
+            result.append(v1 + v2[i])
+    if isinstance(v2, (float, int)):
+        for i in range(len(v1)):
+            result.append(v1[i] + v2)
+    elif len(v1) == len(v2):
         for i in range(len(v1)):
             result.append(v1[i] + v2[i])
     else:

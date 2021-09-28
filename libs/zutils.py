@@ -66,14 +66,14 @@ def refractor(normal, directional_light, ior):
 
     # cosi < 0 → estoy dentro del objeto
     if cosi < 0:
-        cosi = [-i for i in cosi]
+        cosi = -cosi
     else:
         etai, etat = etat, etai
         normal = [-i for i in normal]
 
     # Determina si existe reflexión interna
     eta = etai / etat
-    k = 1 - eta * eta * (1 - pow(cosi, 2))
+    k = 1 - eta * eta * (1 - (cosi * cosi))
     # Reflexión total
     if k < 0:
         return None
@@ -87,20 +87,22 @@ def fresnel(normal, directional_light, ior):
     etat = ior
 
     if cosi > 0:
-        cosi = [-i for i in cosi]
+        etai, etat = etat, etai
 
-    sint = etai / etat * (max(0, 1 - cosi**2)**0.5)
+    sint = etai / etat * (max(0, 1 - cosi * cosi) ** 0.5)
 
     # Revisa si hay reflexión interna
     if sint >= 1:
         # Solo hay reflexión
         return 1
-    cost = max(0, 1 - sint**2)**0.5
+
+    cost = max(0, 1 - sint * sint) ** 0.5
     cosi = abs(cosi)
     Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
     Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
 
-    return (pow(Rs, 2) + pow(Rp, 2)) / 2
+    value = (Rs * Rs + Rp * Rp) / 2
+    return value
 
 
 
