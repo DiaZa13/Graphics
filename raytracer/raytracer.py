@@ -124,12 +124,11 @@ class Raytracer(object):
         for y in range(0, self.height, STEPS):
             for x in range(0, self.height, STEPS):  # Convertir de world coordinates a NCD
                 px = 2 * ((x + 1 / 2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
-                py = 2 * ((
-                                  y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
+                py = 2 * ((y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
                 # Simulación del ángulo de visión, asumiendo que el near plane está a 1 unidad de la cámara
                 aRatio = self.width / self.height
                 t = tan(zm.deg2rad(self.fov) / 2)
-                r = t * aRatio
+                r = t * self.width / self.height
                 # Calcular posición de los pixeles en un espacio 3D
                 px *= r
                 py *= t
