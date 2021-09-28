@@ -59,3 +59,92 @@ class Sphere(object):
         normal = zm.normalize(normal)
 
         return Intersect(distance=t0, point=hit, normal=normal, figure=self)
+
+class Plane(object):
+    # Normal → dirección a dónde está viendo el plano
+    # Este será un plano infinito
+    def __init__(self, position, normal, material):
+        self.position = position
+        self.normal = zm.normalize(normal)
+        self.material = material
+
+    # El rayo no hace contacto si:
+    # * Es paralelo
+    # * Si el punto de origen es arriba/abajo del plano y va hacia afuera
+    def rayIntersect(self, origin, direction):
+        # t = ((planePos - ray_origin) dot plane_normal) / ray_direction dot plane_normal
+        denom = zm.dot(direction, self.normal)
+
+        if abs(denom) > 0.0001:
+            t = (zm.dot(zm.subtract(self.position, origin), self.normal)) / denom
+            # Distancia con la que hace contacto con el plano, pero no toma en cuenta si está atrás
+            # Si t es negativo → no hay contacto con el plano
+            if t > 0:
+                # P = O + t * D → punto de contacto
+                hit = zm.sum(origin, zm.multiply(t, direction))
+
+                return Intersect(distance=t, point=hit, normal=self.normal, figure=self)
+
+        # Cuando el valor es 0 el rayo es perpendicular al plano
+        # O cuando t es negativo
+        return None
+
+class AABB(object):
+    # Axis Aligned Bounding Box → no se puede rotar
+    def __init__(self, position, size, material):
+        self.position = position
+        self.size = size
+        self.material = material
+        self.boundsMin = [0, 0, 0]
+        self.boundsMax = [0, 0, 0]
+        self.planes = []
+
+        halfSize = [size[0] / 2, size[1] / 2, size[2] / 2]
+        right = zm.sum(position, V3(halfSize[0], 0, 0))
+        left = zm.sum(position, V3(-halfSize[0], 0, 0))
+        up = zm.sum(position, V3(0, halfSize[1], 0))
+        down = zm.sum(position, V3(0, -halfSize[1], 0))
+        front = zm.sum(position, V3(0, 0, halfSize[2]))
+        back = zm.sum(position, V3(0, 0, -halfSize[2]))
+
+        # Lados
+        self.planes.append(Plane(right, V3(1, 0, 0), material))
+        self.planes.append(Plane(left, V3(-1, 0, 0), material))
+        # Arriba/abajo
+        self.planes.append(Plane(up, V3(0, 1, 0), material))
+        self.planes.append(Plane(down, V3(0, -1, 0), material))
+        # Adelante/atrás
+        self.planes.append(Plane(front, V3(0, 0, 1), material))
+        self.planes.append(Plane(back, V3(0, 0, -1), material))
+
+        # Bounds
+        epsilon = 0.001
+        for i in range(3):
+            self.boundsMin[i] = self.position[i] - (epsilon + self.size[i]/2)
+            self.boundsMax[i] = self.position[i] + (epsilon + self.size[i]/2)
+
+    def rayIntersect(self, origin, direction):
+        intersect = None
+        t = float('inf')
+        for plane in self.planes:
+            planeInter = plane.rayIntersect(origin, direction)
+
+            if planeInter:
+                # Revisa que esté dentro de los borders
+                if self.boundsMin[0] <= planeInter.point[0] <= self.boundsMax[0]:
+                    if self.boundsMin[1] <= planeInter.point[1] <= self.boundsMax[1]:
+                        if self.boundsMin[2] <= planeInter.point[2] <= self.boundsMax[2]:
+                            if planeInter.distance < t:
+                                # Revisar el plano con el cual hace primero contacto
+                                intersect = planeInter
+                                t = planeInter.distance
+
+        if intersect is None:
+            return None
+
+        return Intersect(distance=intersect.distance, point=intersect.point, normal=intersect.normal, figure=self)
+
+
+
+
+

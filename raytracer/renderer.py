@@ -1,11 +1,11 @@
 from raytracer import Raytracer, V3
-from polygons import Sphere
+from polygons import Sphere, Plane, AABB
 from lighting import PointLight, AmbientLight, DirectionalLight
 from materials import *
 from rasterizador.obj import EnvMap
 
-width = 1024
-height = 1024
+width = 512
+height = 512
 
 
 raytracer = Raytracer(width, height)
@@ -16,9 +16,7 @@ raytracer.directionalLight = DirectionalLight(direction=V3(1, -1, -2), intensity
 raytracer.pointLights.append(PointLight(position=V3(0, 2, 0), intensity=0.5))
 # raytracer.pointLights.append(PointLight(position=V3(5, -7, 0)))
 
-raytracer.scene.append(Sphere(V3(0, 0, -8), 2, STONE))
-raytracer.scene.append(Sphere(V3(-1, 1, -5), 0.5, MIRROR))
-raytracer.scene.append(Sphere(V3(0.5, 0.5, -5), 0.5, GOLD))
+raytracer.scene.append(AABB(V3(-3, -3, -8), V3(3, 3, 3), STONE))
 
 raytracer.render()
 raytracer.end('output.bmp')
