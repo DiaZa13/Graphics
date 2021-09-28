@@ -2,12 +2,14 @@
 import struct
 from libs.zutils import colors
 from libs.zmath import normalize, pi
-from numpy import arccos,  arctan2
+from numpy import arccos, arctan2
+
 
 def color(r, g, b):
     # Comúnmente la tarjeta de video en colores acepta valor de 0 a 1
     # Y para convertirlo en byte se multiplica por 255
     return bytes([int(b * 255), int(g * 255), int(r * 255)])
+
 
 class Obj(object):
     def __init__(self, filename):
@@ -92,6 +94,7 @@ class Texture(object):
             # Si se pasan coordenas inválidas entonces se devuelve negro
             return colors(0, 0, 0)
 
+
 # Enviroment map
 class EnvMap(object):
     def __init__(self, filename):
@@ -123,7 +126,7 @@ class EnvMap(object):
 
     def getColor(self, direction):
         direction = normalize(direction)
-        x = int(arctan2(direction[2], direction[0]) / (2 * pi()) * self.width)
-        y = int(arccos(-direction[1]) / (2 * pi()) * self.height)
-        # TODO revisar con el código base
-        return x, y
+        x = int((arctan2(direction[2], direction[0]) / (2 * pi())) * self.width)
+        y = int(arccos(-direction[1]) / pi() * self.height)
+
+        return self.pixels[y][x]

@@ -56,3 +56,51 @@ def reflection(normal, directional_light):
     reflect = zm.normalize(reflect)
 
     return reflect
+
+def refractor(normal, directional_light, ior):
+    # Snell's law
+    # ángulo crítico
+    cosi = max(-1, min(1, zm.dot(directional_light, normal)))
+    etai = 1
+    etat = ior
+
+    # cosi < 0 → estoy dentro del objeto
+    if cosi < 0:
+        cosi = [-i for i in cosi]
+    else:
+        etai, etat = etat, etai
+        normal = [-i for i in normal]
+
+    # Determina si existe reflexión interna
+    eta = etai / etat
+    k = 1 - eta * eta * (1 - pow(cosi, 2))
+    # Reflexión total
+    if k < 0:
+        return None
+
+    R = zm.multiply(eta, zm.sum(directional_light, zm.multiply((eta * cosi**0.5), normal)))
+    return zm.normalize(R)
+
+def fresnel(normal, directional_light, ior):
+    cosi = max(-1, min(1, zm.dot(directional_light, normal)))
+    etai = 1
+    etat = ior
+
+    if cosi > 0:
+        cosi = [-i for i in cosi]
+
+    sint = etai / etat * (max(0, 1 - cosi**2)**0.5)
+
+    # Revisa si hay reflexión interna
+    if sint >= 1:
+        # Solo hay reflexión
+        return 1
+    cost = max(0, 1 - sint**2)**0.5
+    cosi = abs(cosi)
+    Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
+    Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
+
+    return (pow(Rs, 2) + pow(Rp, 2)) / 2
+
+
+

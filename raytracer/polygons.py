@@ -1,26 +1,6 @@
 # Figuras para las intersecciones
 import libs.zmath as zm
-from libs.zutils import V3, WHITE
-import numpy as np
-
-class DirectionalLight(object):
-    def __init__(self, direction=V3(0, -1, 0), intensity=1, color=WHITE):
-        self.direction = zm.normalize(direction)
-        self.intensity = intensity
-        self.color = color
-
-class AmbientLight(object):
-    def __init__(self, strength=0, color=WHITE):
-        self.strength = strength
-        self.color = color
-
-class PointLight(object):
-    # Es una luz con un punto de origen que se esparce a todas las direcciones
-    # "genera" una cantidad infinita de rayos de luz en todas las direcciones
-    def __init__(self, position=V3(0, 0, 0), intensity=1, color=WHITE):
-        self.position = position
-        self.intensity = intensity
-        self.color = color
+from libs.zutils import V3
 
 
 class Intersect(object):
