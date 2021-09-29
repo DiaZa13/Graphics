@@ -74,6 +74,7 @@ class Raytracer(object):
 
     def drawPoint(self, x, y, color=None):
         if x < self.vw_x or x > self.vw_x + self.vw_width or y < self.vw_y or y > self.vw_y + self.vw_height:
+            print('test')
             return
 
         if (0 <= x < self.width) and (0 <= y < self.height):
@@ -122,7 +123,7 @@ class Raytracer(object):
 
     def render(self):
         for y in range(0, self.height, STEPS):
-            for x in range(0, self.height, STEPS):  # Convertir de world coordinates a NCD
+            for x in range(0, self.width, STEPS):  # Convertir de world coordinates a NCD
                 px = 2 * ((x + 1 / 2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
                 py = 2 * ((
                                   y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro

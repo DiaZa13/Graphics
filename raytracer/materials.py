@@ -47,11 +47,21 @@ class Materials(object):
 
 
 # default materials
-SKY = Materials(diffuse=zu.colors(135 / 255, 206 / 255, 235 / 255), spec=64)
+SKY = Materials(diffuse=zu.colors(135 / 255, 206 / 255, 235 / 255), spec=16)
 GRASS = Materials(diffuse=zu.colors(86 / 255, 125 / 255, 70 / 255), spec=128)
-COPPER = Materials(diffuse=zu.colors(168 / 255, 98 / 255, 66 / 255))
 STONE = Materials(diffuse=zu.colors(0.4, 0.4, 0.4), spec=64)
+WOOD = Materials(diffuse=(0.6, 0.2, 0.2), spec=64)
+# REFLECTIVE MATERIALS
 MIRROR = Materials(spec=128, material_type=REFLECTIVE)
 GOLD = Materials(diffuse=zu.colors(1, 0.8, 0), spec=32, material_type=REFLECTIVE)
+COPPER = Materials(diffuse=zu.colors(168 / 255, 98 / 255, 66 / 255), spec=16, material_type=REFLECTIVE)
+ALUMINUM = Materials(diffuse=zu.colors(210 / 255, 217 / 255, 219 / 255), spec=128, material_type=REFLECTIVE)
+METALLIC = Materials(diffuse=zu.colors(170 / 255, 169 / 255, 173 / 255), spec=128, material_type=REFLECTIVE)
+NEON_YELLOW = Materials(diffuse=zu.colors(1, 243 / 255, 0), spec=128, material_type=REFLECTIVE)
+# TRANSPARENT MATERIALS
 GLASS = Materials(spec=64, ior=1.5, material_type=TRANSPARENT)
-WOOD = Materials(diffuse=(0.6, 0.2, 0.2), spec=64)
+ICE = Materials(spec=128, ior=1.31, material_type=TRANSPARENT)
+QUARTZ = Materials(spec=32, ior=1.46, material_type=TRANSPARENT)
+SAPPHIRE = Materials(spec=32, ior=1.77, material_type=TRANSPARENT)
+DIAMOND = Materials(spec=30, ior=2.41, material_type=TRANSPARENT)
+
