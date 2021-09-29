@@ -62,7 +62,7 @@ def refractor(normal, direction, ior):
     # Snell's law
     # ángulo crítico
     cosi = max(-1, min(1, zm.dot(direction, normal)))
-    cosi2 = max(-1, min(1, np.dot(direction, normal)))
+
     etai = 1
     etat = ior
 
@@ -73,16 +73,10 @@ def refractor(normal, direction, ior):
         etai, etat = etat, etai
         normal = [-i for i in normal]
 
-    if cosi2 < 0:
-        cosi2 = -cosi2
-    else:
-        etai, etat = etat, etai
-        normal = np.array(normal) * -1
 
     # Determina si existe reflexión interna
     eta = etai / etat
     k = 1 - eta * eta * (1 - (cosi * cosi))
-    k2 = 1 - eta * eta * (1 - (cosi2 * cosi2))
 
     # Reflexión total
     if k < 0:

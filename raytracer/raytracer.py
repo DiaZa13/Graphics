@@ -124,7 +124,8 @@ class Raytracer(object):
         for y in range(0, self.height, STEPS):
             for x in range(0, self.height, STEPS):  # Convertir de world coordinates a NCD
                 px = 2 * ((x + 1 / 2) / self.width) - 1  # Se le suma 1/2 al pixel para que al momento de generar los
-                py = 2 * ((y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
+                py = 2 * ((
+                                  y + 1 / 2) / self.height) - 1  # rayos desde los pixeles el mismo se genere desde en el centro
                 # Simulación del ángulo de visión, asumiendo que el near plane está a 1 unidad de la cámara
                 aRatio = self.width / self.height
                 t = tan(zm.deg2rad(self.fov) / 2)
@@ -159,6 +160,12 @@ class Raytracer(object):
         specularIntensity = [0, 0, 0]
         defaultColor = material.opaqueMaterial()
 
+        for pointLight in self.pointLights:
+            specular = pointLight.specular
+            specularIntensity = zm.sum(specularIntensity, specular)
+
+        specularIntensity = zm.sum(specularIntensity, self.directionalLight.specular)
+
         if material.material_type == 0:
             intensity = zm.sum(intensity, defaultColor)
 
@@ -168,27 +175,36 @@ class Raytracer(object):
             intensity = [reflectColor[2] / 255,
                          reflectColor[1] / 255,
                          reflectColor[0] / 255]
-            for pointLight in self.pointLights:
-                specular = pointLight.specular
-                specularIntensity = zm.sum(specularIntensity, specular)
-
-            specularIntensity = zm.sum(specularIntensity, self.directionalLight.specular)
             intensity = zm.sum(intensity, specularIntensity)
 
         elif material.material_type == 2:
             # Fresnel
             # Qué tanta refracción y reflexión hay
             outside = zm.dot(direction, intersect.normal) < 0
-            # Para que no haga contacto con la superficie de sí mismo, no se, se revisa a cierta distancia para que no toque la superficie
+            # Para que no haga contacto con la superficie de sí mismo, no se, se revisa a cierta distancia para que
+            # no toque la superficie
             bias = zm.multiply(0.001, intersect.normal)
-            refract = zu.refractor(intersect.normal, direction, material.ior)
+            kr = zu.fresnel(intersect.normal, direction, material.ior)
 
-            refract_origin = zm.subtract(intersect.point, bias) if outside else zm.sum(bias, intersect.point)
-            refractColor = self.castRay(refract_origin, refract, None, recursion + 1)
-            intensity = [refractColor[2] / 255,
-                         refractColor[1] / 255,
-                         refractColor[0] / 255]
+            reflect = zu.reflection(intersect.normal, [-i for i in direction])
+            reflect_origin = zm.sum(bias, intersect.point) if outside else zm.subtract(intersect.point, bias)
+            reflectColor = self.castRay(reflect_origin, reflect, None, recursion + 1)
+            reflectColor = [reflectColor[2] / 255,
+                            reflectColor[1] / 255,
+                            reflectColor[0] / 255]
+            intensity = zm.multiply(kr, reflectColor)
 
+            if kr < 1:
+                refract = zu.refractor(intersect.normal, direction, material.ior)
+                refract_origin = zm.subtract(intersect.point, bias) if outside else zm.sum(bias, intersect.point)
+                refractColor = self.castRay(refract_origin, refract, None, recursion + 1)
+                refractColor = [refractColor[2] / 255,
+                                refractColor[1] / 255,
+                                refractColor[0] / 255]
+                refractColor = zm.multiply((1-kr), refractColor)
+                intensity = zm.sum(intensity, refractColor)
+
+            intensity = zm.sum(intensity, specularIntensity)
 
         r = min(1, color[0] * intensity[0])
         g = min(1, color[1] * intensity[1])
