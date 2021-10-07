@@ -1,12 +1,13 @@
 import libs.zutils as zu
 import libs.zmath as zm
+from rasterizador.obj import Texture
 
 OPAQUE = 0
 REFLECTIVE = 1
 TRANSPARENT = 2
 
 class Materials(object):
-    def __init__(self, diffuse=zu.WHITE, spec=1, ior=1, material_type=OPAQUE):
+    def __init__(self, diffuse=zu.WHITE, spec=1, ior=1, texture=None, material_type=OPAQUE):
         # diffuse = color de la superficie
         self.diffuse = diffuse
         self.spec = spec
@@ -18,6 +19,7 @@ class Materials(object):
         self.camPosition = None
         self.scene = None
         self.ior = ior
+        self.texture = texture
 
     def objectLightning(self, scene, intersect):
         self.scene = scene
@@ -64,4 +66,7 @@ ICE = Materials(spec=128, ior=1.31, material_type=TRANSPARENT)
 QUARTZ = Materials(spec=32, ior=1.46, material_type=TRANSPARENT)
 SAPPHIRE = Materials(spec=32, ior=1.77, material_type=TRANSPARENT)
 DIAMOND = Materials(spec=30, ior=2.41, material_type=TRANSPARENT)
+
+# Materiales con textura
+MOON = Materials(texture=Texture('../textures/earthDay.bmp'))
 

@@ -1,15 +1,19 @@
 # Figuras para las intersecciones
 import libs.zmath as zm
 from libs.zutils import V3
+from numpy import arctan2, arccos
 
 
 class Intersect(object):
-    def __init__(self, distance, point, normal, figure):
+    def __init__(self, distance, point, normal, figure, textCoords):
         # distance = distancia a la que hace contacto
         self.distance = distance
         self.point = point
         self.normal = normal
+        self.textCoords = textCoords
         self.figure = figure
+
+
 
 
 class Sphere(object):
@@ -58,7 +62,11 @@ class Sphere(object):
         # Asegurar normalizar la normal
         normal = zm.normalize(normal)
 
-        return Intersect(distance=t0, point=hit, normal=normal, figure=self)
+        u = 1 - (arctan2(normal[2], normal[0]) / (2 * zm.pi()) + 0.5)
+        v = arccos(-normal[1]) / zm.pi()
+        uvs = (u, v)
+
+        return Intersect(distance=t0, point=hit, normal=normal, figure=self, textCoords=uvs)
 
 class Plane(object):
     # Normal → dirección a dónde está viendo el plano
@@ -83,7 +91,7 @@ class Plane(object):
                 # P = O + t * D → punto de contacto
                 hit = zm.sum(origin, zm.multiply(t, direction))
 
-                return Intersect(distance=t, point=hit, normal=self.normal, figure=self)
+                return Intersect(distance=t, point=hit, normal=self.normal, figure=self, textCoords=None)
 
         # Cuando el valor es 0 el rayo es perpendicular al plano
         # O cuando t es negativo
@@ -126,6 +134,9 @@ class AABB(object):
     def rayIntersect(self, origin, direction):
         intersect = None
         t = float('inf')
+
+        uvs = None
+
         for plane in self.planes:
             planeInter = plane.rayIntersect(origin, direction)
 
@@ -139,10 +150,26 @@ class AABB(object):
                                 intersect = planeInter
                                 t = planeInter.distance
 
+                                u, v = 0, 0
+                                if abs(plane.normal[0]) > 0:  # está viendo a los lados
+                                    # Necesito las coordenadas en Y y Z
+                                    u = (planeInter.point[1] - self.boundsMin[1]) / (self.boundsMax[1] - self.boundsMin[1])
+                                    v = (planeInter.point[2] - self.boundsMin[2]) / (self.boundsMax[2] - self.boundsMin[2])
+                                elif abs(plane.normal[1]) > 0:  # está viendo hacia arriba/abajo
+                                    # Necesito las coordenadas en X y Z
+                                    u = (planeInter.point[0] - self.boundsMin[0]) / (self.boundsMax[0] - self.boundsMin[0])
+                                    v = (planeInter.point[2] - self.boundsMin[2]) / (self.boundsMax[2] - self.boundsMin[2])
+                                elif abs(plane.normal[2]) > 0:  # está viendo hacia adelante/atrás
+                                    # Necesito las coordenadas en X y Y
+                                    u = (planeInter.point[0] - self.boundsMin[0]) / (self.boundsMax[0] - self.boundsMin[0])
+                                    v = (planeInter.point[1] - self.boundsMin[1]) / (self.boundsMax[1] - self.boundsMin[1])
+
+                                uvs = (u, v)
+
         if intersect is None:
             return None
 
-        return Intersect(distance=intersect.distance, point=intersect.point, normal=intersect.normal, figure=self)
+        return Intersect(distance=intersect.distance, point=intersect.point, normal=intersect.normal, figure=self, textCoords=uvs)
 
 
 

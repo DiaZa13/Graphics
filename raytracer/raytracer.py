@@ -170,6 +170,13 @@ class Raytracer(object):
         if material.material_type == 0:
             intensity = zm.sum(intensity, defaultColor)
 
+            if material.texture and intersect.textCoords:
+                textColor = material.texture.getColor(intersect.textCoords[0], intersect.textCoords[1])
+                textColor = [textColor[2] / 255,
+                             textColor[1] / 255,
+                             textColor[0] / 255]
+                intensity = zm.multiply(intensity, textColor)
+
         elif material.material_type == 1:
             reflect = zu.reflection(intersect.normal, [-i for i in direction])
             reflectColor = self.castRay(intersect.point, reflect, intersect.figure, recursion + 1)
@@ -202,7 +209,7 @@ class Raytracer(object):
                 refractColor = [refractColor[2] / 255,
                                 refractColor[1] / 255,
                                 refractColor[0] / 255]
-                refractColor = zm.multiply((1-kr), refractColor)
+                refractColor = zm.multiply((1 - kr), refractColor)
                 intensity = zm.sum(intensity, refractColor)
 
             intensity = zm.sum(intensity, specularIntensity)
